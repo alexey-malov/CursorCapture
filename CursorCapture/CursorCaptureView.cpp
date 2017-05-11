@@ -6,57 +6,13 @@
 #include "resource.h"
 
 #include "CursorCaptureView.h"
+#include "CapturedCursor.h"
 
 BOOL CCursorCaptureView::PreTranslateMessage(MSG* pMsg)
 {
 	pMsg;
 	return FALSE;
 }
-
-namespace 
-{
-
-class CIconInfo
-{
-public:
-	CIconInfo(HICON icon)
-		: m_info{ sizeof(m_info) }
-	{
-		if (!GetIconInfoEx(icon, &m_info))
-		{
-			throw std::runtime_error("Failed to get icon info");
-		}
-		m_bmMask = m_info.hbmMask;
-		m_bmColor = m_info.hbmColor;
-	}
-	CIconInfo(const CIconInfo&) = delete;
-	CIconInfo& operator=(const CIconInfo&) = delete;
-
-	CBitmapHandle GetMask()const
-	{
-		return m_bmMask.m_hBitmap;
-	}
-	CBitmapHandle GetColor()const
-	{
-		return m_bmColor.m_hBitmap;
-	}
-	int GetXHotspot()const
-	{
-		return m_info.xHotspot;
-	}
-	int GetYHotspot()const
-	{
-		return m_info.yHotspot;
-	}
-private:
-	ICONINFOEX m_info;
-	CBitmap m_bmMask;
-	CBitmap m_bmColor;
-};
-
-} // namespace 
-
-
 
 void ComposeIcon(const CIconInfo& ii, WTL::CDC& dc, int x, int y)
 {
@@ -99,6 +55,9 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 	ATLVERIFY(GetCursorInfo(&ci));
 
 	
+	CCapturedCursor c;
+
+
 	//CCursor cursorIcon = reinterpret_cast<HCURSOR>(CopyImage(ci.hCursor, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE));
 	CIconHandle cursorIcon = ci.hCursor;//CopyIcon(ci.hCursor);
 	

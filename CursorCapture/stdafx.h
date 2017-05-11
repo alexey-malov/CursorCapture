@@ -25,6 +25,11 @@ extern CAppModule _Module;
 #include <atlgdi.h>
 #include <atlcrack.h>
 
+// This define is required to let boost algorithms and adaptors deduce result of functions and lambdas 
+// using decltype() without need for explicit definition of function objects with result_type typedef
+// See http://boost.2283326.n4.nabble.com/range-cannot-use-lambda-predicate-in-adaptor-with-certain-algorithms-td3560157.html
+#define BOOST_RESULT_OF_USE_DECLTYPE
+
 #include <boost/scope_exit.hpp>
 
 #if defined _M_IX86
