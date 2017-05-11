@@ -13,6 +13,9 @@ BOOL CCursorCaptureView::PreTranslateMessage(MSG* pMsg)
 	return FALSE;
 }
 
+namespace 
+{
+
 class CIconInfo
 {
 public:
@@ -51,6 +54,7 @@ private:
 	CBitmap m_bmColor;
 };
 
+} // namespace 
 
 
 
@@ -113,7 +117,7 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 
 			auto captureCursor = [&cursorIcon, stepIndex]()
 			{
-				auto desktopDC = ::GetDC(nullptr);
+				WTL::CWindowDC desktopDC(nullptr);
 				WTL::CBitmap outBitmap;
 				BITMAPINFO bi = { 0 };
 				auto & bih = bi.bmiHeader;
@@ -150,6 +154,7 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 
 				dc.SetPixel(originX + ii.GetXHotspot(), originY + ii.GetYHotspot(), RGB(255, 0, 0));
 
+
 				{
 					CBitmap cursorBitmap = captureCursor();
 					WTL::CDC srcDC;
@@ -165,6 +170,7 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 
 					srcDC.SelectBitmap(oldBitmap);
 				}
+
 			}
 			return drawnSuccessfully;
 		};
