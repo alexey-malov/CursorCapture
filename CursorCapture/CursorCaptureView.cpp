@@ -8,6 +8,8 @@
 #include "CursorCaptureView.h"
 #include "CapturedCursor.h"
 
+using boost::optional;
+
 BOOL CCursorCaptureView::PreTranslateMessage(MSG* pMsg)
 {
 	pMsg;
@@ -17,18 +19,105 @@ BOOL CCursorCaptureView::PreTranslateMessage(MSG* pMsg)
 void ComposeIcon(const CIconInfo& ii, WTL::CDC& dc, int x, int y)
 {
 	WTL::CDC srcDC;
-	srcDC.CreateCompatibleDC(dc);
+	WTL::CWindowDC desktopDC(nullptr);
+	srcDC.CreateCompatibleDC(desktopDC);
+
+	auto color = ii.GetColor();
+	auto mask = ii.GetMask();
+
+	optional<BITMAP> bmColor;
+	if (color)
+	{
+		BITMAP b;
+		ATLVERIFY(color.GetBitmap(&b));
+		bmColor = b;
+	}
+	optional<BITMAP> bmMask;
+	if (mask)
+	{
+		BITMAP b;
+		ATLVERIFY(mask.GetBitmap(&b));
+		bmMask = b;
+	}
+
+	if (mask && 
+		(!bmColor || bmColor->bmBitsPixel < 32)
+		)
+	{
+		auto oldBitmap = srcDC.SelectBitmap(mask);
+		auto w = bmMask->bmWidth;
+		bool bwCursor = !bmColor;
+		auto h = bwCursor ? bmMask->bmHeight / 2 : bmMask->bmHeight;
+		dc.BitBlt(x, y, w, h, srcDC, 0, 0, SRCAND);
+		
+
+		if (bwCursor)
+		{
+			CBitmap dib;
+			BITMAPINFO bmi = { 0 };
+			BITMAPINFOHEADER & bih = bmi.bmiHeader;
+			bih.biSize = sizeof(BITMAPINFOHEADER);
+			bih.biWidth = w;
+			bih.biHeight = h;
+			bih.biPlanes = 1;
+			bih.biBitCount = 32;
+			bih.biCompression = BI_RGB;
+			LPVOID bits = nullptr;
+
+			CDC memDC;
+			memDC.CreateCompatibleDC(desktopDC);
+			ATLVERIFY(dib.CreateDIBSection(desktopDC, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0));
+			auto ooo = memDC.SelectBitmap(dib);
+			ATLVERIFY(memDC.BitBlt(0, 0, w, h, srcDC, 0, h, SRCCOPY));
+
+			dc.BitBlt(x, y, w, h, memDC, 0, 0, SRCINVERT);
+			memDC.SelectBitmap(ooo);
+		}
+		else
+		{
+			ATLASSERT(color);
+			srcDC.SelectBitmap(color);
+			dc.BitBlt(x, y, w, h, srcDC, 0, 0, SRCINVERT);
+		}
+		srcDC.SelectBitmap(oldBitmap);
+	}
+	else
+	{
+		ATLASSERT(bmColor);
+		auto oldBitmap = srcDC.SelectBitmap(color);
+
+		BLENDFUNCTION bf = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+		ATLVERIFY(dc.AlphaBlend(x, y, bmColor->bmWidth, bmColor->bmHeight, srcDC, 0, 0, bmColor->bmWidth, bmColor->bmHeight, bf));
+
+		srcDC.SelectBitmap(oldBitmap);
+	}
+
+	/*
 	int w = 32;
 	int h = 32;
+*/
 	{
-		if (!ii.GetColor() && ii.GetMask())
+/*
+		if (ii.GetMask() && !ii.GetColor())
 		{
 			auto oldBitmap = srcDC.SelectBitmap(ii.GetMask());
 			BITMAP bmMask;
 			ATLVERIFY(ii.GetMask().GetBitmap(&bmMask));
 			ATLASSERT(h == bmMask.bmHeight / 2);
 			dc.StretchBlt(x, y, w, h, srcDC, 0, 0, w, h, SRCAND);
-			dc.StretchBlt(x, y, w, h, srcDC, 0, h, w, h, SRCINVERT);
+			//dc.StretchBlt(x, y, w, h, srcDC, 0, h, w, h, SRCINVERT);
+			srcDC.SelectBitmap(oldBitmap);
+			
+		}
+		else if (ii.GetMask() && ii.GetColor())
+		{
+			auto oldBitmap = srcDC.SelectBitmap(ii.GetMask());
+			BITMAP bmMask;
+			ATLVERIFY(ii.GetMask().GetBitmap(&bmMask));
+			ATLASSERT(h == bmMask.bmHeight / 2);
+			dc.StretchBlt(x, y, w, h, srcDC, 0, 0, w, h, SRCAND);
+			srcDC.SelectBitmap(ii.GetColor());
+			dc.StretchBlt(x, y, w, h, srcDC, 0, 0, w, h, SRCINVERT);
 			srcDC.SelectBitmap(oldBitmap);
 		}
 		else if (ii.GetColor())
@@ -42,7 +131,7 @@ void ComposeIcon(const CIconInfo& ii, WTL::CDC& dc, int x, int y)
 			ATLVERIFY(dc.AlphaBlend(x, y, w, h, srcDC, 0, 0, w, h, bf));
 
 			srcDC.SelectBitmap(oldBitmap);
-		}
+		}*/
 	}
 }
 
@@ -52,15 +141,24 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 
 	//TODO: Add your drawing code here
 	CURSORINFO ci{ sizeof(CURSORINFO)};
-	ATLVERIFY(GetCursorInfo(&ci));
+	if (!GetCursorInfo(&ci))
+	{
+		return 0;
+	}
 
 	
 	CCapturedCursor c;
 
 
 	//CCursor cursorIcon = reinterpret_cast<HCURSOR>(CopyImage(ci.hCursor, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE));
-	CIconHandle cursorIcon = ci.hCursor;//CopyIcon(ci.hCursor);
-	
+	//CIconHandle cursorIcon = ci.hCursor;
+	CIconHandle cursorIcon = LoadCursor(NULL, IDC_IBEAM);
+	//CIconHandle cursorIcon = LoadCursor(_Module.m_hInst, MAKEINTRESOURCE(IDC_EDIT_CURSOR));
+	//CIconHandle cursorIcon = LoadCursor(_Module.m_hInst, MAKEINTRESOURCE(IDC_BEAM_I));
+	//CIconHandle cursorIcon = LoadCursor(NULL, IDC_ARROW);
+	//CIconHandle cursorIcon = LoadCursor(NULL, IDC_CROSS);
+	//CIconHandle cursorIcon = LoadCursor(NULL, IDC_WAIT);
+
 	if (ci.flags == CURSOR_SHOWING && cursorIcon)
 	{
 		CIconInfo ii(cursorIcon);
@@ -98,11 +196,24 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 				return outBitmap.Detach();
 			};
 
+			{
+				CRect rc(originX, originY + 10, originX + 32, originY + 32);
+				dc.SetBkColor(RGB(255, 0, 0));
+				ATLVERIFY(dc.ExtTextOutW(0, 0, ETO_OPAQUE, &rc, nullptr, 0, nullptr));
+
+			}
+
 			auto drawnSuccessfully = draw(originX, originY);
 			if (drawnSuccessfully)
 			{
+				{
+					CRect rc(originX + 90, originY - 10, originX + 100 + 42, originY + 32 + 10);
+					dc.SetBkColor(RGB(0, 120, 90));
+					ATLVERIFY(dc.ExtTextOutW(0, 0, ETO_OPAQUE, &rc, nullptr, 0, nullptr));
+				}
 				draw(originX + 100, originY, DI_MASK);
 				draw(originX + 100, originY + 50, DI_IMAGE);
+				
 
 				{
 					CRect rc(originX + 200, originY, originX + 200 + 32, originY + 32);

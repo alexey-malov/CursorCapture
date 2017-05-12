@@ -67,4 +67,60 @@
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="arrow.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\cursor1.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\cursor2.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\aero_arrow.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\arrow_i.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\beam_i.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\cursor4.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\beam_il.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\beam_im.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\cursor5.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\beam_l.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\beam_m.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\beam_r.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\beam_rl.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\beam_rm.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\cross_i.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\cross_il.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\cross_im.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
 </Project>

@@ -244,6 +244,26 @@
     <Image Include="res\CursorCapture.ico" />
     <Image Include="res\toolbar.bmp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="arrow.cur" />
+    <None Include="res\aero_arrow.cur" />
+    <None Include="res\arrow_i.cur" />
+    <None Include="res\beam_i.cur" />
+    <None Include="res\beam_il.cur" />
+    <None Include="res\beam_im.cur" />
+    <None Include="res\beam_l.cur" />
+    <None Include="res\beam_m.cur" />
+    <None Include="res\beam_r.cur" />
+    <None Include="res\beam_rl.cur" />
+    <None Include="res\beam_rm.cur" />
+    <None Include="res\cross_i.cur" />
+    <None Include="res\cross_il.cur" />
+    <None Include="res\cross_im.cur" />
+    <None Include="res\cursor1.cur" />
+    <None Include="res\cursor2.cur" />
+    <None Include="res\cursor4.cur" />
+    <None Include="res\cursor5.cur" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
