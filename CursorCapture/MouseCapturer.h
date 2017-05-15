@@ -16,15 +16,15 @@ struct DIBitmapID
 	unsigned height;
 };
 
-class CHashedImage
+class CDIBitmapData
 {
 public:
-	explicit CHashedImage(const CDIBitmap& bitmap);
-	CHashedImage(const CHashedImage&) = default;
-	CHashedImage(CHashedImage&&) = default;
+	explicit CDIBitmapData(const CDIBitmap& bitmap);
+	CDIBitmapData(const CDIBitmapData&) = default;
+	CDIBitmapData(CDIBitmapData&&) = default;
 
-	CHashedImage& operator=(const CHashedImage&) = default;
-	CHashedImage& operator=(CHashedImage&&) = default;
+	CDIBitmapData& operator=(const CDIBitmapData&) = default;
+	CDIBitmapData& operator=(CDIBitmapData&&) = default;
 
 	unsigned GetWidth()const { return m_width; }
 	unsigned GetHeight()const { return m_height; }
@@ -40,13 +40,12 @@ struct CursorFrameDescription
 	bool operator==(const CursorFrameDescription& rhs)const;
 	bool operator!=(const CursorFrameDescription& rhs)const;
 
-	const CHashedImage* colorBitmap = nullptr;
-	const CHashedImage* maskBitmap = nullptr;
+	const CDIBitmapData* colorBitmap = nullptr;
+	const CDIBitmapData* maskBitmap = nullptr;
 	MouseButtonsState mouseState;
 	CPoint screenPos = {0, 0};
 	CPoint hotspot = { 0, 0 };
 };
-
 
 class CMouseCapturer
 {
@@ -62,10 +61,10 @@ private:
 	{
 		std::size_t operator()(const DIBitmapID& k)const;
 	};
-	using ImageStorage = std::unordered_map<DIBitmapID, CHashedImage, DIBitmapIDHasher>;
+	using ImageStorage = std::unordered_map<DIBitmapID, CDIBitmapData, DIBitmapIDHasher>;
 
 	CursorFrameDescription CreateCursorFrameDescriptor(const CCapturedCursor& cursor);
-	CHashedImage& RegisterImage(const CDIBitmap& dib);
+	CDIBitmapData& RegisterImage(const CDIBitmap& dib);
 
 	std::unique_ptr<CCapturedCursor> m_prevCursor;
 	ImageStorage m_images;

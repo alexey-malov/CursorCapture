@@ -29,7 +29,7 @@ bool DIBitmapID::operator==(const DIBitmapID& rhs)const
 	return crc64 == rhs.crc64 && width == rhs.width && height == rhs.height;
 }
 
-CHashedImage::CHashedImage(const CDIBitmap& bitmap)
+CDIBitmapData::CDIBitmapData(const CDIBitmap& bitmap)
 	: m_bits(bitmap.GetWidth() * bitmap.GetHeight())
 	, m_width(bitmap.GetWidth())
 	, m_height(bitmap.GetHeight())
@@ -91,7 +91,7 @@ CursorFrameDescription CMouseCapturer::CreateCursorFrameDescriptor(const CCaptur
 	return cursorDesc;
 }
 
-CHashedImage& CMouseCapturer::RegisterImage(const CDIBitmap& dib)
+CDIBitmapData& CMouseCapturer::RegisterImage(const CDIBitmap& dib)
 {
 	assert(dib);
 	DIBitmapID dibId(dib);
