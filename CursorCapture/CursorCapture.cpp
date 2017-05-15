@@ -5,6 +5,7 @@
 
 #include "resource.h"
 
+#include "CapturedCursor.h"
 #include "CursorCaptureView.h"
 #include "aboutdlg.h"
 #include "MainFrm.h"

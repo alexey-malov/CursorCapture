@@ -11,7 +11,6 @@ struct CursorFrameInfo
 bool operator==(const CursorFrameInfo& lhs, const CursorFrameInfo& rhs);
 bool operator!=(const CursorFrameInfo& lhs, const CursorFrameInfo& rhs);
 
-
 class CIconInfo
 {
 public:
@@ -24,9 +23,36 @@ public:
 	int GetXHotspot()const;
 	int GetYHotspot()const;
 private:
-	ICONINFOEX m_info;
+	ICONINFO m_info;
 	WTL::CBitmap m_bmMask;
 	WTL::CBitmap m_bmColor;
+};
+
+class CDIBitmap
+{
+public:
+	using Span = gsl::span<uint32_t>;
+	CDIBitmap() = default;
+	CDIBitmap(HDC dc, unsigned width, unsigned height);
+	CDIBitmap(CDIBitmap&& other);
+	CDIBitmap(const CDIBitmap&) = delete;
+
+	CDIBitmap& operator=(CDIBitmap&& other);
+	CDIBitmap& operator=(const CDIBitmap&) = delete;
+
+	unsigned GetWidth()const { return m_width; }
+	unsigned GetHeight()const { return m_height; }
+
+	HBITMAP GetBitmap()const;
+
+	explicit operator bool()const { return !!m_bitmap; }
+
+	Span GetData()const;
+private:
+	WTL::CBitmap m_bitmap;
+	Span m_bits;
+	unsigned m_width = 0;
+	unsigned m_height = 0;
 };
 
 class CCursorImage
@@ -36,17 +62,25 @@ public:
 
 	CCursorImage(HCURSOR cursor, UINT frameIndex);
 
-	CCursorImage(CCursorImage && other);
+	CCursorImage(CCursorImage && other) = default;
 	CCursorImage(const CCursorImage&) = delete;
 
-	CCursorImage& operator=(CCursorImage && rhs);
+	CCursorImage& operator=(CCursorImage && rhs) = default;
 	CCursorImage& operator=(const CCursorImage&) = delete;
 
 	bool IsEmpty()const;
 
+	POINT GetHotspot()const { return m_hotspot; }
+
+	unsigned GetWidth()const;
+	unsigned GetHeight()const;
+
+	const CDIBitmap& GetMask()const { return m_mask; }
+	const CDIBitmap& GetColor()const { return m_color; }
 private:
-	WTL::CBitmap m_mask;
-	WTL::CBitmap m_color;
+	POINT m_hotspot = {0, 0};
+	CDIBitmap m_mask;
+	CDIBitmap m_color;
 };
 
 class CCapturedCursor
@@ -56,17 +90,18 @@ public:
 	CCapturedCursor(const CCapturedCursor&) = delete;
 	CCapturedCursor& operator=(const CCapturedCursor&) = delete;
 
-	bool IsVisible()const;
+	POINT GetScreenPos()const { return m_screenPos; }
+	const CCursorImage& GetImage()const;
 
-	~CCapturedCursor();
+	bool IsVisible()const;
 private:
 	POINT m_screenPos;
 	bool m_isVisible;
 	ULONGLONG m_cursorCaptureTick; // cursor capture tick
 	ULONGLONG m_frameStartTick; // frame capture tick
-	DWORD m_frameIndex = 0;
+	UINT m_frameIndex = 0;
 	WTL::CCursorHandle m_cursor;
 	CursorFrameInfo m_frameInfo;
-
+	CCursorImage m_image;
 };
 

@@ -4,9 +4,12 @@
 
 #pragma once
 
+class CCapturedCursor;
+
 class CCursorCaptureView : public CWindowImpl<CCursorCaptureView>
 {
 public:
+	~CCursorCaptureView();
 	DECLARE_WND_CLASS(NULL)
 
 	BOOL PreTranslateMessage(MSG* pMsg);
@@ -28,4 +31,6 @@ private:
 	int OnCreate(LPCREATESTRUCT lpCreateStruct);
 
 	UINT m_animationStepIndex = 0;
+
+	std::unique_ptr<CCapturedCursor> m_capturedCursor;
 };

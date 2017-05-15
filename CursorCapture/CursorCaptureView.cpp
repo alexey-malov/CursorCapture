@@ -10,6 +10,19 @@
 
 using boost::optional;
 
+template <typename Fn>
+void AutoSelectObject(HDC dc, HGDIOBJ obj, Fn&& fn)
+{
+	auto oldObject = SelectObject(dc, obj);
+	fn();
+	SelectObject(dc, oldObject);
+}
+
+CCursorCaptureView::~CCursorCaptureView()
+{
+
+}
+
 BOOL CCursorCaptureView::PreTranslateMessage(MSG* pMsg)
 {
 	pMsg;
@@ -32,17 +45,49 @@ void ComposeIcon(const CIconInfo& ii, WTL::CDC& dc, int x, int y)
 		ATLVERIFY(color.GetBitmap(&b));
 		bmColor = b;
 	}
+
+	bool isInvertingCursor = false;
+
 	optional<BITMAP> bmMask;
 	if (mask)
 	{
 		BITMAP b;
 		ATLVERIFY(mask.GetBitmap(&b));
 		bmMask = b;
+
+		auto w = bmMask->bmWidth;
+		auto h = !color ? bmMask->bmHeight / 2 : bmMask->bmHeight;
+
+
+		CBitmap dib;
+		BITMAPINFO bmi = { 0 };
+		BITMAPINFOHEADER & bih = bmi.bmiHeader;
+		bih.biSize = sizeof(BITMAPINFOHEADER);
+		bih.biWidth = w;
+		bih.biHeight = h;
+		bih.biPlanes = 1;
+		bih.biBitCount = 32;
+		bih.biCompression = BI_RGB;
+		LPVOID bits = nullptr;
+
+
+		auto oldBitmap = srcDC.SelectBitmap(mask);
+
+		CDC memDC;
+		memDC.CreateCompatibleDC(desktopDC);
+		ATLVERIFY(dib.CreateDIBSection(desktopDC, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0));
+		auto ooo = memDC.SelectBitmap(dib);
+		ATLVERIFY(memDC.BitBlt(0, 0, w, h, srcDC, 0, 0, SRCCOPY));
+		std::vector<uint32_t> buffer(w * h);
+		ATLVERIFY(dib.GetDIBits(memDC, 0, h, buffer.data(), &bmi, DIB_RGB_COLORS));
+		memDC.SelectBitmap(ooo);
+
+		srcDC.SelectBitmap(oldBitmap);
+
+		isInvertingCursor = boost::algorithm::all_of_equal(buffer, RGB(255, 255, 255));
 	}
 
-	if (mask && 
-		(!bmColor || bmColor->bmBitsPixel < 32)
-		)
+	if (mask && (isInvertingCursor || !color))
 	{
 		auto oldBitmap = srcDC.SelectBitmap(mask);
 		auto w = bmMask->bmWidth;
@@ -91,48 +136,6 @@ void ComposeIcon(const CIconInfo& ii, WTL::CDC& dc, int x, int y)
 
 		srcDC.SelectBitmap(oldBitmap);
 	}
-
-	/*
-	int w = 32;
-	int h = 32;
-*/
-	{
-/*
-		if (ii.GetMask() && !ii.GetColor())
-		{
-			auto oldBitmap = srcDC.SelectBitmap(ii.GetMask());
-			BITMAP bmMask;
-			ATLVERIFY(ii.GetMask().GetBitmap(&bmMask));
-			ATLASSERT(h == bmMask.bmHeight / 2);
-			dc.StretchBlt(x, y, w, h, srcDC, 0, 0, w, h, SRCAND);
-			//dc.StretchBlt(x, y, w, h, srcDC, 0, h, w, h, SRCINVERT);
-			srcDC.SelectBitmap(oldBitmap);
-			
-		}
-		else if (ii.GetMask() && ii.GetColor())
-		{
-			auto oldBitmap = srcDC.SelectBitmap(ii.GetMask());
-			BITMAP bmMask;
-			ATLVERIFY(ii.GetMask().GetBitmap(&bmMask));
-			ATLASSERT(h == bmMask.bmHeight / 2);
-			dc.StretchBlt(x, y, w, h, srcDC, 0, 0, w, h, SRCAND);
-			srcDC.SelectBitmap(ii.GetColor());
-			dc.StretchBlt(x, y, w, h, srcDC, 0, 0, w, h, SRCINVERT);
-			srcDC.SelectBitmap(oldBitmap);
-		}
-		else if (ii.GetColor())
-		{
-			auto oldBitmap = srcDC.SelectBitmap(ii.GetColor());
-
-			BITMAP bmColor;
-			ATLVERIFY(ii.GetColor().GetBitmap(&bmColor));
-
-			BLENDFUNCTION bf = {AC_SRC_OVER, 0, 255, AC_SRC_ALPHA};
-			ATLVERIFY(dc.AlphaBlend(x, y, w, h, srcDC, 0, 0, w, h, bf));
-
-			srcDC.SelectBitmap(oldBitmap);
-		}*/
-	}
 }
 
 LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
@@ -145,17 +148,46 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 	{
 		return 0;
 	}
+	{
+		CRect rc(200, 200, 250, 250);
+		dc.SetBkColor(RGB(0, 255, 0));
+		ATLVERIFY(dc.ExtTextOutW(0, 0, ETO_OPAQUE, &rc, nullptr, 0, nullptr));
 
+	}
+
+	m_capturedCursor = std::make_unique<CCapturedCursor>(m_capturedCursor.get());
+	auto & img = m_capturedCursor->GetImage();
+	CDC srcDC;
+	srcDC.CreateCompatibleDC();
+	if (img.GetMask())
+	{
+		AutoSelectObject(srcDC, img.GetMask().GetBitmap(), [&] {
+			ATLVERIFY(dc.BitBlt(195, 195, img.GetWidth(), img.GetHeight(), srcDC, 0, 0, SRCAND));
+		});
+		AutoSelectObject(srcDC, img.GetColor().GetBitmap(), [&] {
+			ATLVERIFY(dc.BitBlt(195, 195, img.GetWidth(), img.GetHeight(), srcDC, 0, 0, SRCINVERT));
+		});
+	}
+	else
+	{
+		AutoSelectObject(srcDC, img.GetColor().GetBitmap(), [&] {
+			BLENDFUNCTION bf = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+
+			ATLVERIFY(dc.AlphaBlend(195, 195, img.GetWidth(), img.GetHeight(), srcDC, 0, 0, img.GetWidth(), img.GetHeight(), bf));
+		});
+	}
 	
-	CCapturedCursor c;
+	return 0;
 
 
 	//CCursor cursorIcon = reinterpret_cast<HCURSOR>(CopyImage(ci.hCursor, IMAGE_CURSOR, 0, 0, LR_DEFAULTSIZE));
-	//CIconHandle cursorIcon = ci.hCursor;
-	CIconHandle cursorIcon = LoadCursor(NULL, IDC_IBEAM);
+	CIconHandle cursorIcon = ci.hCursor;
+	//CIconHandle cursorIcon = LoadCursor(NULL, IDC_IBEAM);
 	//CIconHandle cursorIcon = LoadCursor(_Module.m_hInst, MAKEINTRESOURCE(IDC_EDIT_CURSOR));
 	//CIconHandle cursorIcon = LoadCursor(_Module.m_hInst, MAKEINTRESOURCE(IDC_BEAM_I));
 	//CIconHandle cursorIcon = LoadCursor(NULL, IDC_ARROW);
+	//CIconHandle cursorIcon = LoadCursor(_Module.m_hInst, MAKEINTRESOURCE(IDC_ARROW_I));
+	//CIconHandle cursorIcon = LoadCursor(_Module.m_hInst, MAKEINTRESOURCE(IDC_EDIT_CURSOR));
 	//CIconHandle cursorIcon = LoadCursor(NULL, IDC_CROSS);
 	//CIconHandle cursorIcon = LoadCursor(NULL, IDC_WAIT);
 
@@ -256,6 +288,7 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 			}
 		}
 	}
+
 
 
 	return 0;

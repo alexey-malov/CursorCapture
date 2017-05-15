@@ -4,6 +4,7 @@
 #include <boost/iterator/transform_iterator.hpp>
 
 using namespace std;
+using boost::optional;
 
 bool operator==(const CursorFrameInfo& lhs, const CursorFrameInfo& rhs)
 {
@@ -19,6 +20,14 @@ bool operator!=(const CursorFrameInfo& lhs, const CursorFrameInfo& rhs)
 
 namespace
 {
+
+template <typename Fn>
+void AutoSelectObject(HDC dc, HGDIOBJ obj, Fn&& fn)
+{
+	auto oldObject = SelectObject(dc, obj);
+	fn();
+	SelectObject(dc, oldObject);
+}
 
 class CCursorFrameInfoGetter
 {
@@ -110,9 +119,21 @@ bool IsBuiltinCursorHandle(HCURSOR cursor)
 	return builtInCursors.IsBuiltinCursorHandle(cursor);
 }
 
+CDIBitmap CreateDIBitmapFromBitmap(HDC hSrcDC, HDC hDstDC, HBITMAP srcBitmap, int x, int y, unsigned width, unsigned height)
+{
+	CDCHandle dstDC(hDstDC);
+	CDIBitmap dib(hSrcDC, width, height);
+	AutoSelectObject(dstDC, dib.GetBitmap(), [&] {
+		CDCHandle srcDC(hSrcDC);
+		AutoSelectObject(srcDC, srcBitmap, [&] {
+			ATLVERIFY(dstDC.BitBlt(0, 0, width, height, srcDC, x, y, SRCCOPY));
+		});
+	});
+
+	return dib;
 }
 
-
+} // anonymous namespace
 
 CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 	: m_cursorCaptureTick(GetTickCount64())
@@ -135,7 +156,7 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 
 	m_frameInfo = GetCursorFrameInfo(m_cursor);
 
-	// Calculate animation frames
+	// Calculate animation frame
 	{
 		// TODO: handle custom cursor
 		bool cursorIsSame = prevCursor &&
@@ -151,11 +172,19 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 				auto msSinceFrameStart = m_cursorCaptureTick - prevCursor->m_frameStartTick;
 				auto frameDuration = m_frameInfo.GetFrameDurationInMs();
 				auto framesSincePreviousFrame = msSinceFrameStart / frameDuration;
-				m_frameIndex = (m_frameIndex + framesSincePreviousFrame) % m_frameInfo.totalFrames;
-				m_frameStartTick = m_frameStartTick + framesSincePreviousFrame * frameDuration;
+				m_frameIndex = (prevCursor->m_frameIndex + framesSincePreviousFrame) % m_frameInfo.totalFrames;
+				m_frameStartTick = prevCursor->m_frameStartTick + framesSincePreviousFrame * frameDuration;
 			}
 		}
 	}
+
+	// Capture cursor image
+	m_image = CCursorImage(m_cursor, m_frameIndex);
+}
+
+const CCursorImage& CCapturedCursor::GetImage() const
+{
+	return m_image;
 }
 
 bool CCapturedCursor::IsVisible() const
@@ -163,9 +192,6 @@ bool CCapturedCursor::IsVisible() const
 	return m_isVisible;
 }
 
-CCapturedCursor::~CCapturedCursor()
-{
-}
 
 bool CursorFrameInfo::IsAnimated() const
 {
@@ -178,37 +204,9 @@ DWORD CursorFrameInfo::GetFrameDurationInMs() const
 	return displayRateInJiffies * 1000 / 60;
 }
 
-CCursorImage::CCursorImage(CCursorImage && other)
-{
-	*this = std::move(other);
-}
-
-CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
-{
-	CIconInfo iconInfo(cursor);
-	auto mask = iconInfo.GetMask();
-	auto color = iconInfo.GetMask();
-
-}
-
-bool CCursorImage::IsEmpty() const
-{
-	return !m_color || !m_mask;
-}
-
-CCursorImage& CCursorImage::operator=(CCursorImage && rhs)
-{
-	if (this != std::addressof(rhs))
-	{
-		m_color.Attach(rhs.m_color.Detach());
-		m_mask.Attach(rhs.m_color.Detach());
-	}
-	return *this;
-}
-
 CIconInfo::CIconInfo(HICON icon) : m_info{ sizeof(m_info) }
 {
-	if (!GetIconInfoEx(icon, &m_info))
+	if (!GetIconInfo(icon, &m_info))
 	{
 		throw std::runtime_error("Failed to get icon info");
 	}
@@ -234,4 +232,145 @@ int CIconInfo::GetXHotspot() const
 int CIconInfo::GetYHotspot() const
 {
 	return m_info.yHotspot;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
+{
+	CIconInfo iconInfo(cursor);
+	auto mask = iconInfo.GetMask();
+	if (!mask)
+	{
+		throw std::runtime_error("Cursor must have a mask");
+	}
+
+	m_hotspot = { iconInfo.GetXHotspot(), iconInfo.GetYHotspot() };
+
+	auto color = iconInfo.GetColor();
+
+	bool useMaskDrawing = !color;
+
+	WTL::CWindowDC desktopDC(nullptr);
+	WTL::CDC srcDC;
+	ATLVERIFY(srcDC.CreateCompatibleDC(desktopDC));
+	WTL::CDC dstDC;
+	ATLVERIFY(dstDC.CreateCompatibleDC(desktopDC));
+
+	BITMAP bmMask;
+	ATLVERIFY(mask.GetBitmap(&bmMask));
+	auto width = bmMask.bmWidth;
+	auto height = color ? bmMask.bmHeight : bmMask.bmHeight / 2;
+
+	auto makeDibFromCursor = [&dstDC, width, height, frameIndex, &cursor](UINT flags) {
+		CDIBitmap dib(dstDC, width, height);
+		AutoSelectObject(dstDC, dib.GetBitmap(), [&] {
+			ATLVERIFY(dstDC.DrawIconEx(0, 0, cursor, 0, 0, frameIndex, nullptr, flags));
+		});
+		return dib;
+	};
+
+	if (color)
+	{
+		ATLASSERT(!useMaskDrawing);
+
+		BITMAP bmColor;
+		ATLVERIFY(color.GetBitmap(bmColor));
+		if (bmColor.bmBitsPixel == 32)
+		{
+			auto maskDib = CreateDIBitmapFromBitmap(srcDC, dstDC, mask, 0, 0, width, height);
+			useMaskDrawing = boost::algorithm::all_of_equal(maskDib.GetData(), RGB(255, 255, 255));
+		}
+	}
+
+	if (useMaskDrawing)
+	{
+		m_mask = makeDibFromCursor(DI_MASK);
+		m_color = makeDibFromCursor(DI_IMAGE);
+	}
+	else // Draw using DrawIconEx
+	{
+		m_color = makeDibFromCursor(DI_IMAGE);
+		// Premultiply alpha
+		for (uint32_t & x : m_color.GetData())
+		{
+			float alpha = (x >> 24) / 255.0f;
+			auto premultiply = [&](auto c) {
+				return gsl::narrow_cast<uint32_t>(roundf(c * alpha));
+			};
+			auto red = premultiply(GetRValue(x));
+			auto green = premultiply(GetGValue(x));
+			auto blue = premultiply(GetBValue(x));
+			x = RGB(red, green, blue) | (x & 0xff000000);
+		}
+	}
+
+}
+
+bool CCursorImage::IsEmpty() const
+{
+	return !m_color || !m_mask;
+}
+
+unsigned CCursorImage::GetWidth() const
+{
+	assert(m_color);
+	return m_color.GetWidth();
+}
+
+unsigned CCursorImage::GetHeight() const
+{
+	assert(m_color);
+	return m_color.GetHeight();
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+CDIBitmap& CDIBitmap::operator=(CDIBitmap&& other)
+{
+	if (this != std::addressof(other))
+	{
+		m_bitmap.Attach(other.m_bitmap.Detach());
+
+
+		m_width = other.m_width;
+		m_height = other.m_height;
+		other.m_width = other.m_height = 0;
+
+		m_bits = other.m_bits;
+		other.m_bits = Span();
+	}
+	return *this;
+}
+
+CDIBitmap::CDIBitmap(HDC dc, unsigned width, unsigned height)
+	: m_width(width)
+	, m_height(height)
+{
+	BITMAPINFO bi = { 0 };
+	auto & bih = bi.bmiHeader;
+	bih.biSize = sizeof(BITMAPINFOHEADER);
+	bih.biCompression = BI_RGB;
+	bih.biPlanes = 1;
+	bih.biBitCount = 32;
+	bih.biWidth = width;
+	bih.biHeight = height;
+	LPVOID bits = nullptr;
+	ATLVERIFY(m_bitmap.CreateDIBSection(dc, &bi, DIB_RGB_COLORS, &bits, nullptr, 0));
+	m_bits = gsl::make_span(reinterpret_cast<uint32_t*>(bits), width * height);
+}
+
+CDIBitmap::CDIBitmap(CDIBitmap&& other)
+{
+	*this = std::move(other);
+}
+
+HBITMAP CDIBitmap::GetBitmap() const
+{
+	return m_bitmap;
+}
+
+CDIBitmap::Span CDIBitmap::GetData() const
+{
+	return m_bits;
 }
