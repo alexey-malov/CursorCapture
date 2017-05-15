@@ -32,11 +32,17 @@ extern CAppModule _Module;
 
 #include <vector>
 #include <algorithm>
-#include <boost/algorithm/cxx11/all_of.hpp>
+#include <deque>
+#include <chrono>
+#include <map>
+#include <unordered_map>
 
+#include <boost/algorithm/cxx11/all_of.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/optional.hpp>
+#include <boost/functional/hash.hpp>
 #include <gsl/span>
+
 
 #if defined _M_IX86
   #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")

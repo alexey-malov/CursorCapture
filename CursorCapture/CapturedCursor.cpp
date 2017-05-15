@@ -3,20 +3,9 @@
 #include <array>
 #include <boost/iterator/transform_iterator.hpp>
 
-using namespace std;
-using boost::optional;
 
-bool operator==(const CursorFrameInfo& lhs, const CursorFrameInfo& rhs)
+namespace mousecapture
 {
-	return
-		lhs.displayRateInJiffies == rhs.displayRateInJiffies &&
-		lhs.totalFrames == rhs.totalFrames;
-}
-
-bool operator!=(const CursorFrameInfo& lhs, const CursorFrameInfo& rhs)
-{
-	return !(lhs == rhs);
-}
 
 namespace
 {
@@ -47,7 +36,7 @@ public:
 		if (m_getCursorFrameInfo)
 		{
 			CursorFrameInfo frameInfo;
-			auto result = m_getCursorFrameInfo(cursor, 0, 0, &frameInfo.displayRateInJiffies, &frameInfo.totalFrames);
+			ATLVERIFY(m_getCursorFrameInfo(cursor, 0, 0, &frameInfo.displayRateInJiffies, &frameInfo.totalFrames));
 			return frameInfo;
 		}
 		else
@@ -86,7 +75,7 @@ static const LPCWSTR STANDARD_CURSOR_IDS[] = {
 template <size_t N, size_t... Is>
 std::array<HCURSOR, N> ResourceIdsToHCursors(const LPCWSTR(&resources)[N], std::index_sequence<Is...>)
 {
-	return{ {LoadCursor(nullptr, resources[Is])...} };
+	return{ { LoadCursor(nullptr, resources[Is])... } };
 }
 template <size_t N, size_t... Is>
 std::array<HCURSOR, N> ResourceIdsToHCursors(const LPCWSTR(&resources)[N])
@@ -150,6 +139,22 @@ MouseButtonsState CaptureMouseButtonState()
 
 } // anonymous namespace
 
+
+using namespace std;
+using boost::optional;
+
+bool operator==(const CursorFrameInfo& lhs, const CursorFrameInfo& rhs)
+{
+	return
+		lhs.displayRateInJiffies == rhs.displayRateInJiffies &&
+		lhs.totalFrames == rhs.totalFrames;
+}
+
+bool operator!=(const CursorFrameInfo& lhs, const CursorFrameInfo& rhs)
+{
+	return !(lhs == rhs);
+}
+
 CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 	: m_cursorCaptureTick(GetTickCount64())
 	, m_frameStartTick(m_cursorCaptureTick)
@@ -200,7 +205,7 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 
 }
 
-MouseButtonsState CCapturedCursor::GetButtons() const
+MouseButtonsState CCapturedCursor::GetMouseButtonsState() const
 {
 	return m_mouseButtons;
 }
@@ -313,6 +318,8 @@ CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
 	else // Draw using DrawIconEx
 	{
 		m_color = makeDibFromCursor(DI_IMAGE);
+
+		GdiFlush();
 		// Premultiply alpha
 		for (uint32_t & x : m_color.GetData())
 		{
@@ -392,7 +399,14 @@ HBITMAP CDIBitmap::GetBitmap() const
 	return m_bitmap;
 }
 
-CDIBitmap::Span CDIBitmap::GetData() const
+CDIBitmap::ConstSpan CDIBitmap::GetData() const
 {
 	return m_bits;
 }
+
+CDIBitmap::Span CDIBitmap::GetData()
+{
+	return m_bits;
+}
+
+} // namespace mousecapture

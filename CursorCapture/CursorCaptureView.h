@@ -4,7 +4,12 @@
 
 #pragma once
 
+namespace mousecapture
+{
+
 class CCapturedCursor;
+
+} // namespace mousecapture
 
 class CCursorCaptureView : public CWindowImpl<CCursorCaptureView>
 {
@@ -32,5 +37,5 @@ private:
 
 	UINT m_animationStepIndex = 0;
 
-	std::unique_ptr<CCapturedCursor> m_capturedCursor;
+	std::unique_ptr<mousecapture::CCapturedCursor> m_capturedCursor;
 };

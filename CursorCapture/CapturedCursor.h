@@ -1,4 +1,8 @@
 #pragma once
+#include "CapturedCursor_fwd.h"
+
+namespace mousecapture
+{
 
 struct CursorFrameInfo
 {
@@ -32,6 +36,7 @@ class CDIBitmap
 {
 public:
 	using Span = gsl::span<uint32_t>;
+	using ConstSpan = gsl::span<const uint32_t>;
 	CDIBitmap() = default;
 	CDIBitmap(HDC dc, unsigned width, unsigned height);
 	CDIBitmap(CDIBitmap&& other);
@@ -47,7 +52,8 @@ public:
 
 	explicit operator bool()const { return !!m_bitmap; }
 
-	Span GetData()const;
+	ConstSpan GetData()const;
+	Span GetData();
 private:
 	WTL::CBitmap m_bitmap;
 	Span m_bits;
@@ -83,13 +89,6 @@ private:
 	CDIBitmap m_color;
 };
 
-struct MouseButtonsState
-{
-	bool leftPressed = false;
-	bool rightPressed = false;
-	bool middlePressed= false;
-};
-
 class CCapturedCursor
 {
 public:
@@ -99,7 +98,7 @@ public:
 
 	ULONGLONG GetCaptureTick()const { return m_cursorCaptureTick; }
 
-	MouseButtonsState GetButtons()const;
+	MouseButtonsState GetMouseButtonsState()const;
 	POINT GetScreenPos()const { return m_screenPos; }
 	const CCursorImage& GetImage()const;
 
@@ -116,3 +115,4 @@ private:
 	MouseButtonsState m_mouseButtons;
 };
 
+} // namespace mousecapture

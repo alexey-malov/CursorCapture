@@ -13,6 +13,9 @@
       <UniqueIdentifier>{3c0c4e55-1e84-4f09-8913-09adb924f652}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;jpg;jpeg;jpe;manifest</Extensions>
     </Filter>
+    <Filter Include="mousecapture">
+      <UniqueIdentifier>{11122dfb-4f73-48b5-892d-1efe786c3779}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -31,7 +34,13 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CapturedCursor.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>mousecapture</Filter>
+    </ClCompile>
+    <ClCompile Include="MouseCapturer.cpp">
+      <Filter>mousecapture</Filter>
+    </ClCompile>
+    <ClCompile Include="crc64.cpp">
+      <Filter>mousecapture</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -51,6 +60,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CapturedCursor.h">
+      <Filter>mousecapture</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseCapturer.h">
+      <Filter>mousecapture</Filter>
+    </ClInclude>
+    <ClInclude Include="crc64.h">
+      <Filter>mousecapture</Filter>
+    </ClInclude>
+    <ClInclude Include="CapturedCursor_fwd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
