@@ -133,6 +133,21 @@ CDIBitmap CreateDIBitmapFromBitmap(HDC hSrcDC, HDC hDstDC, HBITMAP srcBitmap, in
 	return dib;
 }
 
+MouseButtonsState CaptureMouseButtonState()
+{
+	auto isButtonPressed = [](auto key) { return (0 != (GetAsyncKeyState(key) & 0x8000)); };
+
+	MouseButtonsState mbs;
+	mbs.leftPressed = isButtonPressed(VK_LBUTTON);
+	mbs.rightPressed = isButtonPressed(VK_RBUTTON);
+	mbs.middlePressed = isButtonPressed(VK_MBUTTON);
+	if (GetSystemMetrics(SM_SWAPBUTTON))
+	{
+		std::swap(mbs.leftPressed, mbs.rightPressed);
+	}
+	return mbs;
+}
+
 } // anonymous namespace
 
 CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
@@ -153,6 +168,8 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 	{
 		return;
 	}
+
+	m_mouseButtons = CaptureMouseButtonState();
 
 	m_frameInfo = GetCursorFrameInfo(m_cursor);
 
@@ -180,6 +197,12 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 
 	// Capture cursor image
 	m_image = CCursorImage(m_cursor, m_frameIndex);
+
+}
+
+MouseButtonsState CCapturedCursor::GetButtons() const
+{
+	return m_mouseButtons;
 }
 
 const CCursorImage& CCapturedCursor::GetImage() const
@@ -191,7 +214,6 @@ bool CCapturedCursor::IsVisible() const
 {
 	return m_isVisible;
 }
-
 
 bool CursorFrameInfo::IsAnimated() const
 {

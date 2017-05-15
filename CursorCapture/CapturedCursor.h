@@ -83,6 +83,13 @@ private:
 	CDIBitmap m_color;
 };
 
+struct MouseButtonsState
+{
+	bool leftPressed = false;
+	bool rightPressed = false;
+	bool middlePressed= false;
+};
+
 class CCapturedCursor
 {
 public:
@@ -90,18 +97,22 @@ public:
 	CCapturedCursor(const CCapturedCursor&) = delete;
 	CCapturedCursor& operator=(const CCapturedCursor&) = delete;
 
+	ULONGLONG GetCaptureTick()const { return m_cursorCaptureTick; }
+
+	MouseButtonsState GetButtons()const;
 	POINT GetScreenPos()const { return m_screenPos; }
 	const CCursorImage& GetImage()const;
 
 	bool IsVisible()const;
 private:
 	POINT m_screenPos;
-	bool m_isVisible;
+	bool m_isVisible = false;
 	ULONGLONG m_cursorCaptureTick; // cursor capture tick
 	ULONGLONG m_frameStartTick; // frame capture tick
 	UINT m_frameIndex = 0;
 	WTL::CCursorHandle m_cursor;
 	CursorFrameInfo m_frameInfo;
 	CCursorImage m_image;
+	MouseButtonsState m_mouseButtons;
 };
 
