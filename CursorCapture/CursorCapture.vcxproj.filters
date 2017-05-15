@@ -69,7 +69,7 @@
       <Filter>mousecapture</Filter>
     </ClInclude>
     <ClInclude Include="CapturedCursor_fwd.h">
-      <Filter>Header Files</Filter>
+      <Filter>mousecapture</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

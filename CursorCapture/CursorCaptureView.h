@@ -3,6 +3,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include "MouseCapturer.h"
 
 namespace mousecapture
 {
@@ -38,4 +39,6 @@ private:
 	UINT m_animationStepIndex = 0;
 
 	std::unique_ptr<mousecapture::CCapturedCursor> m_capturedCursor;
+	mousecapture::CMouseCapturer m_capturer;
+	boost::optional<ULONGLONG> m_startTick;
 };

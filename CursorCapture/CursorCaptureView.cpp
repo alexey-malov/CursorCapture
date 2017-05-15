@@ -70,6 +70,13 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 
 void CCursorCaptureView::OnTimer(UINT_PTR /*nIDEvent*/)
 {
+	auto tick = GetTickCount64();
+	if (!m_startTick)
+	{
+		m_startTick = tick;
+	}
+	m_capturer.CaptureCursor(CMouseCapturer::Timestamp(tick - *m_startTick));
+
 	RedrawWindow();
 }
 
