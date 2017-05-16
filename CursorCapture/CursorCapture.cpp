@@ -9,6 +9,7 @@
 #include "CursorCaptureView.h"
 #include "aboutdlg.h"
 #include "MainFrm.h"
+#include "TextureAtlasCreator.h"
 
 CAppModule _Module;
 

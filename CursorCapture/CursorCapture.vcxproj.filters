@@ -42,6 +42,9 @@
     <ClCompile Include="crc64.cpp">
       <Filter>mousecapture</Filter>
     </ClCompile>
+    <ClCompile Include="TextureAtlasCreator.cpp">
+      <Filter>mousecapture</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -69,6 +72,9 @@
       <Filter>mousecapture</Filter>
     </ClInclude>
     <ClInclude Include="CapturedCursor_fwd.h">
+      <Filter>mousecapture</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureAtlasCreator.h">
       <Filter>mousecapture</Filter>
     </ClInclude>
   </ItemGroup>
