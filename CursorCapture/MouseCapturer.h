@@ -4,18 +4,6 @@
 namespace mousecapture
 {
 
-struct DIBitmapID
-{
-	explicit DIBitmapID(const CDIBitmap& dib);
-
-	bool operator==(const DIBitmapID& rhs)const;
-	bool operator!=(const DIBitmapID& rhs)const;
-
-	uint64_t crc64;
-	unsigned width;
-	unsigned height;
-};
-
 class CDIBitmapData
 {
 public:
@@ -28,7 +16,6 @@ public:
 
 	unsigned GetWidth()const { return m_width; }
 	unsigned GetHeight()const { return m_height; }
-
 private:
 	std::vector<uint32_t> m_bits;
 	unsigned m_width;
@@ -37,6 +24,15 @@ private:
 
 struct CursorFrameDescription
 {
+	CursorFrameDescription() = default;
+	CursorFrameDescription(
+		const CDIBitmapData* colorBitmap,
+		const CDIBitmapData* maskBitmap,
+		const MouseButtonsState& mouseState,
+		const POINT& screenPos,
+		const POINT& hotspot
+	);
+
 	bool operator==(const CursorFrameDescription& rhs)const;
 	bool operator!=(const CursorFrameDescription& rhs)const;
 
@@ -52,31 +48,47 @@ class CMouseCapturer
 public:
 	using Timestamp = std::chrono::milliseconds;
 
-	CMouseCapturer() = default;
-	~CMouseCapturer();
-
-	void CaptureCursor(const Timestamp& timestamp);
-private:
-	struct DIBitmapIDHasher
-	{
-		std::size_t operator()(const DIBitmapID& k)const;
-	};
-	using ImageStorage = std::unordered_map<DIBitmapID, CDIBitmapData, DIBitmapIDHasher>;
-
-	CursorFrameDescription CreateCursorFrameDescriptor(const CCapturedCursor& cursor);
-	CDIBitmapData& RegisterImage(const CDIBitmap& dib);
-
-	std::unique_ptr<CCapturedCursor> m_prevCursor;
-	ImageStorage m_images;
 	struct TimedCursorFrame
 	{
-		TimedCursorFrame(const CursorFrameDescription& descr, const Timestamp& timestamp)
-			: description(descr), timestamp(timestamp)
-		{}
+		TimedCursorFrame(const CursorFrameDescription& descr, const Timestamp& timestamp);
 
 		CursorFrameDescription description;
 		Timestamp timestamp;
 	};
+
+	~CMouseCapturer();
+
+	void CaptureCursor(const Timestamp& timestamp);
+
+	void EnumerateImages(const std::function<void(const CDIBitmapData& img)>& fn) const;
+	void EnumerateFrames(const std::function<void(const TimedCursorFrame& frame)>& fn) const;
+private:
+	// Bitmap id
+	struct DIBitmapID
+	{
+		explicit DIBitmapID(const CDIBitmap& dib);
+
+		bool operator==(const DIBitmapID& rhs)const;
+		bool operator!=(const DIBitmapID& rhs)const;
+
+		uint64_t crc64;
+		unsigned width;
+		unsigned height;
+	};
+
+	struct DIBitmapIDHasher
+	{
+		std::size_t operator()(const DIBitmapID& k)const;
+	};
+
+	// Cursor frame description with timestamp
+	using ImageStorage = std::unordered_map<DIBitmapID, CDIBitmapData, DIBitmapIDHasher>;
+
+	CursorFrameDescription CreateCursorFrameDescriptor(const CCapturedCursor& cursor);
+	CDIBitmapData* RegisterImage(const CDIBitmap& dib);
+
+	std::unique_ptr<CCapturedCursor> m_prevCursor;
+	ImageStorage m_images;
 	std::deque<TimedCursorFrame> m_cursorFrames;
 };
 

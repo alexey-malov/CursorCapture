@@ -41,6 +41,8 @@ extern CAppModule _Module;
 #include <boost/scope_exit.hpp>
 #include <boost/optional.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/range/algorithm/for_each.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include <gsl/span>
 
 
