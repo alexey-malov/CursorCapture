@@ -45,6 +45,12 @@
     <ClCompile Include="TextureAtlasCreator.cpp">
       <Filter>mousecapture</Filter>
     </ClCompile>
+    <ClCompile Include="DIBitmap.cpp">
+      <Filter>mousecapture</Filter>
+    </ClCompile>
+    <ClCompile Include="DIBitmapData.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -76,6 +82,15 @@
     </ClInclude>
     <ClInclude Include="TextureAtlasCreator.h">
       <Filter>mousecapture</Filter>
+    </ClInclude>
+    <ClInclude Include="DIBitmap.h">
+      <Filter>mousecapture</Filter>
+    </ClInclude>
+    <ClInclude Include="DIBitmapData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

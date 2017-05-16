@@ -7,18 +7,7 @@
 
 #include "CursorCaptureView.h"
 #include "CapturedCursor.h"
-
-namespace 
-{
-template <typename Fn>
-void AutoSelectObject(HDC dc, HGDIOBJ obj, Fn&& fn)
-{
-	auto oldObject = SelectObject(dc, obj);
-	fn();
-	SelectObject(dc, oldObject);
-}
-} // namespace 
-
+#include "Utils.h"
 
 using namespace mousecapture;
 
@@ -36,6 +25,17 @@ BOOL CCursorCaptureView::PreTranslateMessage(MSG* pMsg)
 LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/)
 {
 	CPaintDC dc(m_hWnd);
+	CDC srcDC;
+	srcDC.CreateCompatibleDC();
+
+	if (m_textureAtlas.GetBitmap())
+	{
+		auto & atlasDib = m_textureAtlas.GetBitmap();
+		AutoSelectObject(srcDC, atlasDib.GetBitmap(), [&] {
+			ATLVERIFY(dc.BitBlt(0, 0, atlasDib.GetWidth(), atlasDib.GetHeight(), srcDC, 0, 0, SRCCOPY));
+		});
+		return 0;
+	}
 
 	{
 		CRect rc(200, 200, 250, 250);
@@ -45,8 +45,6 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 
 	m_capturedCursor = std::make_unique<CCapturedCursor>(m_capturedCursor.get());
 	auto & img = m_capturedCursor->GetImage();
-	CDC srcDC;
-	srcDC.CreateCompatibleDC();
 	if (img.GetMask())
 	{
 		AutoSelectObject(srcDC, img.GetMask().GetBitmap(), [&] {
@@ -56,7 +54,7 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 			ATLVERIFY(dc.BitBlt(195, 195, img.GetWidth(), img.GetHeight(), srcDC, 0, 0, SRCINVERT));
 		});
 	}
-	else
+	else if (img.GetColor())
 	{
 		AutoSelectObject(srcDC, img.GetColor().GetBitmap(), [&] {
 			BLENDFUNCTION bf = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
@@ -66,6 +64,17 @@ LRESULT CCursorCaptureView::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*l
 	}
 	
 	return 0;
+}
+
+void CCursorCaptureView::OnCaptureStop(UINT /*uNotifyCode*/, int /*nID*/, CWindow /*wndCtl*/)
+{
+	KillTimer(IDT_TIMER1);
+
+	m_textureAtlas = BuildTextureAtlas([this](auto && callback) {
+		m_capturer.EnumerateImages(callback);
+	});
+
+	RedrawWindow();
 }
 
 void CCursorCaptureView::OnTimer(UINT_PTR /*nIDEvent*/)

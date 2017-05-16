@@ -1,10 +1,14 @@
 #include "stdafx.h"
 #include "TextureAtlasCreator.h"
-#include <algorithm>
+#include "MouseCapturer.h"
+#include "DIBitmapData.h"
+#include "Utils.h"
 
 namespace mousecapture
 {
 using boost::optional;
+using namespace std;
+
 namespace 
 {
 unsigned CeilingDiv(int a, int b)
@@ -43,23 +47,113 @@ double CalculateAspectRatioDivergence(const CSize& atlasSize, const CSize& ideal
 	assert(atlasSize.cx > 0 && atlasSize.cy > 0);
 	assert(idealAtlasSize.cx > 0 && idealAtlasSize.cy > 0);
 
-	auto widthDivergence = std::abs(atlasSize.cx - idealAtlasSize.cx) / static_cast<double>(idealAtlasSize.cx);
-	auto heightDivergence = std::abs(atlasSize.cy - idealAtlasSize.cy) / static_cast<double>(idealAtlasSize.cy);
-	return std::max(widthDivergence, heightDivergence);
+	auto widthDivergence = abs(atlasSize.cx - idealAtlasSize.cx) / static_cast<double>(idealAtlasSize.cx);
+	auto heightDivergence = abs(atlasSize.cy - idealAtlasSize.cy) / static_cast<double>(idealAtlasSize.cy);
+	return max(widthDivergence, heightDivergence);
 }
 
 struct AtlasSizeCandidate
 {
 	bool IsBetterThan(const AtlasSizeCandidate& other)const
 	{
-		return std::tie(score, unusedAreaDivergence, aspectRatioDivergence) <
-			std::tie(other.score, other.unusedAreaDivergence, other.aspectRatioDivergence);
+		return tie(score, unusedAreaDivergence, aspectRatioDivergence) <
+			tie(other.score, other.unusedAreaDivergence, other.aspectRatioDivergence);
 	}
 	CSize atlasSize = { 0,0 };
 	double aspectRatioDivergence = 0.0;
 	double unusedAreaDivergence = 0.0;
 	double score = 0.0;
 };
+
+struct NestedDIB
+{
+	NestedDIB(const CDIBitmapData& bitmapData, size_t index)
+		: bitmapData(&bitmapData)
+		, index(index)
+	{
+	}
+
+	gsl::not_null<const CDIBitmapData*> bitmapData;
+	size_t index;
+	CRect frame;
+};
+
+CSize PlaceImagesOnAtlas(gsl::span<NestedDIB> images, const CSize &textureAtlasSize)
+{
+	// Sort images by width, then by height
+	boost::sort(images, [](const auto& lhs, const auto& rhs) {
+		auto lhsBitmap = lhs.bitmapData;
+		auto rhsBitmap = rhs.bitmapData;
+		return make_pair(lhsBitmap->GetWidth(), lhsBitmap->GetHeight()) <
+			make_pair(rhsBitmap->GetWidth(), rhsBitmap->GetHeight());
+	});
+
+	CSize usedAtlasSize;
+
+	unsigned shelfWidth = 0;
+	unsigned shelfLeft = 0;
+	unsigned shelfTop = 0;
+	for (auto & image : images)
+	{
+		auto & bd = image.bitmapData;
+
+		// Find a place for the image
+		do
+		{
+			if (shelfWidth == 0)
+			{
+				shelfWidth = bd->GetWidth();
+			}
+
+			// find place on current shelf
+			if (bd->GetHeight() + shelfTop > gsl::narrow<unsigned>(textureAtlasSize.cy))
+			{
+				shelfTop = 0;
+				shelfLeft += shelfWidth;
+				shelfWidth = 0;
+			}
+		} while (shelfWidth == 0);
+
+		assert(bd->GetWidth() <= shelfWidth);
+
+		unsigned shelfBottom = shelfTop + bd->GetHeight();
+		assert(shelfBottom <= gsl::narrow<unsigned>(textureAtlasSize.cy));
+
+		image.frame.SetRect(shelfLeft, shelfTop, shelfLeft + bd->GetWidth(), shelfBottom);
+		shelfTop = shelfBottom;
+
+		usedAtlasSize.cx = std::max(usedAtlasSize.cx, image.frame.right);
+		usedAtlasSize.cy = std::max(usedAtlasSize.cy, image.frame.bottom);
+	}
+
+	return usedAtlasSize;
+}
+
+void DrawNestedImagesOnDIBitmap(CDIBitmap & target, const gsl::span<const NestedDIB>& nestedDibs)
+{
+	CDC outDC;
+	outDC.CreateCompatibleDC();
+	AutoSelectObject(outDC, target.GetBitmap(), [&] {
+		BITMAPINFO bi = { 0 };
+		BITMAPINFOHEADER& bih = bi.bmiHeader;
+		bih.biSize = sizeof(BITMAPINFOHEADER);
+		bih.biBitCount = 32;
+		bih.biCompression = BI_RGB;
+		bih.biPlanes = 1;
+		for (auto & dib : nestedDibs)
+		{
+			bih.biWidth = dib.frame.Width();
+			bih.biHeight = dib.frame.Height();
+			ATLVERIFY(outDC.SetDIBitsToDevice(
+				dib.frame.left, dib.frame.top,
+				dib.frame.Width(), dib.frame.Height(),
+				0, 0,
+				0, dib.frame.Height(),
+				dib.bitmapData->GetBits().data(),
+				&bi, DIB_RGB_COLORS));
+		}
+	});
+}
 
 } // anonymous namespace
 
@@ -97,13 +191,51 @@ CSize FindOptimalTextureAtlasDimensions(const CSize& imageSize, int imageCount)
 	return winner->atlasSize;
 }
 
-CTextureAtlasCreator::CTextureAtlasCreator()
+CTextureAtlas::CTextureAtlas(CDIBitmap && bitmap, const gsl::span<const RECT>& subImages)
+	: m_bitmap(move(bitmap))
+	, m_subImages(subImages.begin(), subImages.end())
 {
 }
 
-
-CTextureAtlasCreator::~CTextureAtlasCreator()
+gsl::span<const RECT> CTextureAtlas::GetSubImages() const
 {
+	return gsl::make_span(m_subImages);
+}
+
+CTextureAtlas BuildTextureAtlas(const ImageProvider& imageProvider)
+{
+	vector<NestedDIB> images;
+
+	CSize largestImage;
+	imageProvider([&](const CDIBitmapData& bd) {
+		largestImage.cx = max<int>(largestImage.cx, bd.GetWidth());
+		largestImage.cy = max<int>(largestImage.cy, bd.GetHeight());
+		images.emplace_back(bd, images.size());
+	});
+
+	if (images.empty())
+	{
+		return CTextureAtlas();
+	}
+
+	const CSize textureAtlasSize = FindOptimalTextureAtlasDimensions(largestImage, gsl::narrow<int>(images.size()));
+	auto usedAtlasSize = PlaceImagesOnAtlas(images, textureAtlasSize);
+
+	CWindowDC desktopDC(nullptr);
+	CDIBitmap dib(desktopDC, usedAtlasSize.cx, usedAtlasSize.cy);
+	DrawNestedImagesOnDIBitmap(dib, images);
+
+	boost::sort(images, [](auto & lhs, auto & rhs) {
+		return lhs.index < rhs.index;
+	});
+
+	std::vector<RECT> targetRectangles;
+	targetRectangles.reserve(images.size());
+	boost::transform(images, back_inserter(targetRectangles), [](auto & image) {
+		return image.frame;
+	});
+	
+	return CTextureAtlas(move(dib), targetRectangles);
 }
 
 } // namespace mousecapture

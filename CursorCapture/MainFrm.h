@@ -28,6 +28,7 @@ public:
 		COMMAND_ID_HANDLER(ID_APP_ABOUT, OnAppAbout)
 		CHAIN_MSG_MAP(CUpdateUI<CMainFrame>)
 		CHAIN_MSG_MAP(CFrameWindowImpl<CMainFrame>)
+		CHAIN_CLIENT_COMMANDS()
 	END_MSG_MAP()
 
 // Handler prototypes (uncomment arguments if needed):

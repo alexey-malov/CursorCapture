@@ -222,6 +222,8 @@
     <ClCompile Include="crc64.cpp" />
     <ClCompile Include="CursorCapture.cpp" />
     <ClCompile Include="CursorCaptureView.cpp" />
+    <ClCompile Include="DIBitmap.cpp" />
+    <ClCompile Include="DIBitmapData.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="MouseCapturer.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -238,11 +240,14 @@
     <ClInclude Include="CapturedCursor_fwd.h" />
     <ClInclude Include="crc64.h" />
     <ClInclude Include="CursorCaptureView.h" />
+    <ClInclude Include="DIBitmap.h" />
+    <ClInclude Include="DIBitmapData.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="MouseCapturer.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TextureAtlasCreator.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CursorCapture.rc" />

@@ -36,6 +36,7 @@ extern CAppModule _Module;
 #include <algorithm>
 #include <deque>
 #include <chrono>
+#include <functional>
 #include <map>
 #include <unordered_map>
 
@@ -44,8 +45,11 @@ extern CAppModule _Module;
 #include <boost/optional.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/range/algorithm/for_each.hpp>
+#include <boost/range/algorithm/sort.hpp>
+#include <boost/range/algorithm/transform.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <gsl/span>
+#include <gsl/gsl>
 
 
 #if defined _M_IX86

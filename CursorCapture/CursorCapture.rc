@@ -76,6 +76,10 @@ BEGIN
     BEGIN
         MENUITEM "&About CursorCapture",        ID_APP_ABOUT
     END
+    POPUP "Capture"
+    BEGIN
+        MENUITEM "Stop",                        ID_CAPTURE_STOP
+    END
 END
 
 

@@ -8,24 +8,6 @@ namespace mousecapture
 using boost::for_each;
 using boost::adaptors::map_values;
 
-CDIBitmapData::CDIBitmapData(const CDIBitmap& bitmap)
-	: m_bits(bitmap.GetWidth() * bitmap.GetHeight())
-	, m_width(bitmap.GetWidth())
-	, m_height(bitmap.GetHeight())
-{
-	auto srcData = bitmap.GetData();
-	auto dstData = gsl::make_span(m_bits);
-	assert(srcData.size() == dstData.size());
-
-	for (unsigned scanline = 0; scanline < m_height; ++scanline)
-	{
-		auto srcScanline = srcData.subspan((m_height - 1 - scanline) * m_width, m_width);
-		auto dstScanline = dstData.subspan(scanline * m_width, m_width);
-		assert(srcScanline.length_bytes() == dstScanline.length_bytes());
-		memcpy(dstScanline.data(), srcScanline.data(), dstScanline.length_bytes());
-	}
-}
-
 CursorFrameDescription::CursorFrameDescription(const CDIBitmapData* colorBitmap, const CDIBitmapData* maskBitmap,
 	const MouseButtonsState& mouseState, const POINT& screenPos, const POINT& hotspot)
 	: colorBitmap(colorBitmap), maskBitmap(maskBitmap)
