@@ -34,5 +34,6 @@ private:
 	unsigned m_height = 0;
 };
 
+void MakeOpaque(CDIBitmap & dib);
 
 } // namespace mousecapture

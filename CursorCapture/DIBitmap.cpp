@@ -63,4 +63,12 @@ CDIBitmap::Span CDIBitmap::GetData()
 	return m_bits;
 }
 
+void MakeOpaque(CDIBitmap & dib)
+{
+	for (auto & pixel : dib.GetData())
+	{
+		pixel |= 0xff000000;
+	}
+}
+
 } // namespace mousecapture

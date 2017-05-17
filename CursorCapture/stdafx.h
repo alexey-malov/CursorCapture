@@ -49,6 +49,7 @@ extern CAppModule _Module;
 #include <boost/range/algorithm/for_each.hpp>
 #include <boost/range/algorithm/sort.hpp>
 #include <boost/range/algorithm/transform.hpp>
+#include <boost/range/algorithm_ext/for_each.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <gsl/span>

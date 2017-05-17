@@ -2,11 +2,11 @@
 #include "CapturedCursor.h"
 #include "Utils.h"
 
-#include "resource.h"
-
-
 namespace mousecapture
 {
+using namespace std;
+using boost::optional;
+using boost::algorithm::all_of;
 
 namespace
 {
@@ -64,16 +64,15 @@ static const LPCWSTR STANDARD_CURSOR_IDS[] = {
 	IDC_WAIT,
 };
 
-
 template <size_t N, size_t... Is>
-std::array<HCURSOR, N> ResourceIdsToHCursors(const LPCWSTR(&resources)[N], std::index_sequence<Is...>)
+array<HCURSOR, N> ResourceIdsToHCursors(const LPCWSTR(&resources)[N], index_sequence<Is...>)
 {
 	return{ { LoadCursor(nullptr, resources[Is])... } };
 }
 template <size_t N, size_t... Is>
-std::array<HCURSOR, N> ResourceIdsToHCursors(const LPCWSTR(&resources)[N])
+array<HCURSOR, N> ResourceIdsToHCursors(const LPCWSTR(&resources)[N])
 {
-	return ResourceIdsToHCursors(resources, std::make_index_sequence<N>());
+	return ResourceIdsToHCursors(resources, make_index_sequence<N>());
 }
 
 class CBuiltInCursorHandles
@@ -89,30 +88,16 @@ public:
 
 	bool IsBuiltinCursorHandle(HCURSOR cursor)const
 	{
-		return std::find(m_builtinCursors.begin(), m_builtinCursors.end(), cursor) != m_builtinCursors.end();
+		return find(m_builtinCursors.begin(), m_builtinCursors.end(), cursor) != m_builtinCursors.end();
 	}
 private:
-	std::array<HCURSOR, std::extent<decltype(STANDARD_CURSOR_IDS)>::value> m_builtinCursors;
+	array<HCURSOR, extent<decltype(STANDARD_CURSOR_IDS)>::value> m_builtinCursors;
 };
 
 bool IsBuiltinCursorHandle(HCURSOR cursor)
 {
 	static const CBuiltInCursorHandles builtInCursors;
 	return builtInCursors.IsBuiltinCursorHandle(cursor);
-}
-
-CDIBitmap CreateDIBitmapFromBitmap(HDC hSrcDC, HDC hDstDC, HBITMAP srcBitmap, int x, int y, unsigned width, unsigned height)
-{
-	CDCHandle dstDC(hDstDC);
-	CDIBitmap dib(hSrcDC, width, height);
-	AutoSelectObject(dstDC, dib.GetBitmap(), [&] {
-		CDCHandle srcDC(hSrcDC);
-		AutoSelectObject(srcDC, srcBitmap, [&] {
-			ATLVERIFY(dstDC.BitBlt(0, 0, width, height, srcDC, x, y, SRCCOPY));
-		});
-	});
-
-	return dib;
 }
 
 MouseButtonsState CaptureMouseButtonState()
@@ -125,16 +110,37 @@ MouseButtonsState CaptureMouseButtonState()
 	mbs.middlePressed = isButtonPressed(VK_MBUTTON);
 	if (GetSystemMetrics(SM_SWAPBUTTON))
 	{
-		std::swap(mbs.leftPressed, mbs.rightPressed);
+		swap(mbs.leftPressed, mbs.rightPressed);
 	}
 	return mbs;
 }
 
+bool BitmapHasInvertingPixels(const CDIBitmap &maskBitmap, const CDIBitmap &colorBitmap)
+{
+	bool invPixelFound = false;
+	auto checkForInversion = [&](uint32_t maskPixel, uint32_t colorPixel) {
+		if (maskPixel && colorPixel) invPixelFound = true;
+	};
+	boost::for_each(maskBitmap.GetData(), colorBitmap.GetData(), checkForInversion);
+	return invPixelFound;
+}
+
+void GenerateAlphaChannelFromMask(const CDIBitmap &maskBitmap, CDIBitmap &colorBitmap)
+{
+	auto maskBits = maskBitmap.GetData();
+	auto colorBits = colorBitmap.GetData();
+	auto maskIt = maskBits.begin();
+	auto colorIt = colorBits.begin();
+	for (; maskIt != maskBits.end() && colorIt != colorBits.end(); ++maskIt, ++colorIt)
+	{
+		assert(!(*maskIt && *colorIt) && "Inversion pixels are not supported");
+		*colorIt = *maskIt ? 0 : *colorIt | 0xff000000;
+	}
+}
+
 } // anonymous namespace
 
-
-using namespace std;
-using boost::optional;
+//////////////////////////////////////////////////////////////////////////
 
 bool operator==(const CursorFrameInfo& lhs, const CursorFrameInfo& rhs)
 {
@@ -159,9 +165,7 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 	}
 
 	m_screenPos = ci.ptScreenPos;
-	m_cursor = 
-		/*LoadCursor(_Module.m_hInst, MAKEINTRESOURCE(IDC_COLORED_CURSOR));*/
-		ci.hCursor;//*/
+	m_cursor = ci.hCursor;
 
 	m_isVisible = (ci.flags == CURSOR_SHOWING);
 	if (!m_isVisible)
@@ -197,7 +201,6 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 
 	// Capture cursor image
 	m_image = CCursorImage(m_cursor, m_frameIndex);
-
 }
 
 MouseButtonsState CCapturedCursor::GetMouseButtonsState() const
@@ -230,7 +233,7 @@ CIconInfo::CIconInfo(HICON icon) : m_info{ sizeof(m_info) }
 {
 	if (!GetIconInfo(icon, &m_info))
 	{
-		throw std::runtime_error("Failed to get icon info");
+		throw runtime_error("Failed to get icon info");
 	}
 	m_bmMask = m_info.hbmMask;
 	m_bmColor = m_info.hbmColor;
@@ -256,91 +259,79 @@ int CIconInfo::GetYHotspot() const
 	return m_info.yHotspot;
 }
 
-//////////////////////////////////////////////////////////////////////////
-
 CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
 {
 	CIconInfo iconInfo(cursor);
-	auto mask = iconInfo.GetMask();
-	if (!mask)
+	auto iconMask = iconInfo.GetMask();
+	if (!iconMask)
 	{
-		throw std::runtime_error("Cursor must have a mask");
+		assert(!"Cursor must have a mask");
+		throw runtime_error("Cursor must have a mask");
 	}
 
 	m_hotspot = { iconInfo.GetXHotspot(), iconInfo.GetYHotspot() };
 
-	auto color = iconInfo.GetColor();
-
-	bool useMaskDrawing = !color;
+	auto iconColor = iconInfo.GetColor();
 
 	WTL::CWindowDC desktopDC(nullptr);
-	WTL::CDC srcDC;
-	ATLVERIFY(srcDC.CreateCompatibleDC(desktopDC));
 	WTL::CDC dstDC;
 	ATLVERIFY(dstDC.CreateCompatibleDC(desktopDC));
 
 	BITMAP bmMask;
-	ATLVERIFY(mask.GetBitmap(&bmMask));
+	ATLVERIFY(iconMask.GetBitmap(&bmMask));
 	auto width = bmMask.bmWidth;
-	auto height = color ? bmMask.bmHeight : bmMask.bmHeight / 2;
+	auto height = iconColor ? bmMask.bmHeight : bmMask.bmHeight / 2;
 
-	auto makeDibFromCursor = [&dstDC, width, height, frameIndex, &cursor](UINT flags, bool makeOpaque) {
+	auto makeDibFromCursor = [&dstDC, width, height, frameIndex, &cursor](UINT flags) {
 		CDIBitmap dib(dstDC, width, height);
 		AutoSelectObject(dstDC, dib.GetBitmap(), [&] {
 			ATLVERIFY(dstDC.DrawIconEx(0, 0, cursor, 0, 0, frameIndex, nullptr, flags));
 		});
-		if (makeOpaque)
-		{
-			for (auto & pixel : dib.GetData())
-			{
-				pixel |= 0xff000000;
-			}
-		}
 		return dib;
 	};
 
-	if (color)
+	auto maskDib = makeDibFromCursor(DI_MASK);
+
+	m_colorBitmap = makeDibFromCursor(DI_IMAGE);
+	bool useMask = !iconColor;
+	if (iconColor)
 	{
-		ATLASSERT(!useMaskDrawing);
+		ATLASSERT(!useMask);
 
 		BITMAP bmColor;
-		ATLVERIFY(color.GetBitmap(bmColor));
-		if (bmColor.bmBitsPixel == 32)
+		ATLVERIFY(iconColor.GetBitmap(bmColor));
+
+		auto isTransparent = [](uint32_t pixel) { return (pixel & 0xff000000) == 0; };
+		useMask = all_of(m_colorBitmap.GetData(), isTransparent);
+	}
+
+	if (useMask)
+	{
+		if (BitmapHasInvertingPixels(maskDib, m_colorBitmap))
 		{
-			auto maskDib = CreateDIBitmapFromBitmap(srcDC, dstDC, mask, 0, 0, width, height);
-			useMaskDrawing = boost::algorithm::all_of_equal(maskDib.GetData(), RGB(255, 255, 255));
+			m_maskBitmap = move(maskDib);
+			MakeOpaque(m_maskBitmap);
+			MakeOpaque(m_colorBitmap);
+		}
+		else
+		{
+			GenerateAlphaChannelFromMask(maskDib, m_colorBitmap);
 		}
 	}
 
-	if (useMaskDrawing)
-	{
-		m_mask = makeDibFromCursor(DI_MASK, true);
-		m_color = makeDibFromCursor(DI_IMAGE, true);
-	}
-	else // Draw using DrawIconEx
-	{
-		m_color = makeDibFromCursor(DI_IMAGE, false);
-	}
-
-}
-
-bool CCursorImage::IsEmpty() const
-{
-	return !m_color || !m_mask;
+	assert(m_colorBitmap);
 }
 
 unsigned CCursorImage::GetWidth() const
 {
-	assert(m_color);
-	return m_color.GetWidth();
+	assert(m_colorBitmap);
+	return m_colorBitmap.GetWidth();
 }
 
 unsigned CCursorImage::GetHeight() const
 {
-	assert(m_color);
-	return m_color.GetHeight();
+	assert(m_colorBitmap);
+	return m_colorBitmap.GetHeight();
 }
-
-//////////////////////////////////////////////////////////////////////////
 
 } // namespace mousecapture

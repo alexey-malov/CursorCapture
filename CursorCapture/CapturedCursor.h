@@ -48,19 +48,17 @@ public:
 	CCursorImage& operator=(CCursorImage && rhs) = default;
 	CCursorImage& operator=(const CCursorImage&) = delete;
 
-	bool IsEmpty()const;
-
 	POINT GetHotspot()const { return m_hotspot; }
 
 	unsigned GetWidth()const;
 	unsigned GetHeight()const;
 
-	const CDIBitmap& GetMask()const { return m_mask; }
-	const CDIBitmap& GetColor()const { return m_color; }
+	const CDIBitmap& GetMask()const { return m_maskBitmap; }
+	const CDIBitmap& GetColor()const { return m_colorBitmap; }
 private:
 	POINT m_hotspot = {0, 0};
-	CDIBitmap m_mask;
-	CDIBitmap m_color;
+	CDIBitmap m_maskBitmap;
+	CDIBitmap m_colorBitmap;
 };
 
 class CCapturedCursor
