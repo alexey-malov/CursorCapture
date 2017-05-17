@@ -34,4 +34,5 @@ private:
 	unsigned m_height = 0;
 };
 
+
 } // namespace mousecapture

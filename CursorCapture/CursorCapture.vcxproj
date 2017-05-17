@@ -306,10 +306,12 @@
     <None Include="res\cross_i.cur" />
     <None Include="res\cross_il.cur" />
     <None Include="res\cross_im.cur" />
+    <None Include="res\cur00001.cur" />
     <None Include="res\cursor1.cur" />
     <None Include="res\cursor2.cur" />
     <None Include="res\cursor4.cur" />
     <None Include="res\cursor5.cur" />
+    <None Include="res\libeam.cur" />
   </ItemGroup>
   <ItemGroup>
     <Protobuf_Mapping_Rule Include="proto\UserInput.proto">

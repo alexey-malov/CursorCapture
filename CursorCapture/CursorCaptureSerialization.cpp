@@ -26,8 +26,8 @@ namespace
 void SerializeTextureAtlas(const CTextureAtlas& atlas, pb_userinput::TextureAtlas& pbTextureAtlas)
 {
 	auto& dib = atlas.GetBitmap();
-	auto w = dib.GetHeight();
-	auto h = dib.GetWidth();
+	auto w = dib.GetWidth();
+	auto h = dib.GetHeight();
 
 	// Create Free image PNG
 	CFreeImage fi(w, h, 32, 0xff0000, 0x00ff00, 0x0000ff);
@@ -45,6 +45,7 @@ void SerializeTextureAtlas(const CTextureAtlas& atlas, pb_userinput::TextureAtla
 		byteVectorStream.reserve(dib.GetData().size_bytes() + 1000);
 		CFreeImageIOOstream io(byteVectorStream);
 		fi.SaveToHandle(FIF_PNG, io, PNG_Z_DEFAULT_COMPRESSION);
+		fi.Save(FIF_PNG, LR"(c:\temp\cursor.png)", PNG_Z_DEFAULT_COMPRESSION);
 
 		pbTextureAtlas.set_image_format(pb_userinput::TextureAtlas_ImageFormat_PNG);
 
@@ -118,7 +119,7 @@ void SerializeCursorStates(const ICapturedCursorProvider& provider,
 
 } // namespace
 
-void SerializeCursor(const ICapturedCursorProvider& capturedCursorProvider)
+void SerializeCursor(const ICapturedCursorProvider& capturedCursorProvider, std::ostream& stream)
 {
 	pb_userinput::MouseCursor pbCursor;
 	CTextureAtlas textureAtlas = BuildTextureAtlas([&capturedCursorProvider](auto && callback) {
@@ -127,6 +128,8 @@ void SerializeCursor(const ICapturedCursorProvider& capturedCursorProvider)
 
 	SerializeTextureAtlas(textureAtlas, *pbCursor.mutable_texture());
 	SerializeCursorStates(capturedCursorProvider, *pbCursor.mutable_states());
+
+	pbCursor.SerializeToOstream(&stream);
 }
 
 } // namespace mousecapture

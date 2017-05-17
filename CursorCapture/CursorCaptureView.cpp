@@ -8,6 +8,7 @@
 #include "CursorCaptureView.h"
 #include "CapturedCursor.h"
 #include "Utils.h"
+#include "CursorCaptureSerialization.h"
 
 using namespace mousecapture;
 
@@ -74,6 +75,11 @@ void CCursorCaptureView::OnCaptureStop(UINT /*uNotifyCode*/, int /*nID*/, CWindo
 		m_capturer.EnumerateImages(callback);
 	});
 
+	{
+		std::ofstream out(LR"(c:\temp\out.pb)", std::ios_base::binary);
+		SerializeCursor(m_capturer, out);
+	}
+
 	RedrawWindow();
 }
 
@@ -85,6 +91,8 @@ void CCursorCaptureView::OnTimer(UINT_PTR /*nIDEvent*/)
 		m_startTick = tick;
 	}
 	m_capturer.CaptureCursor(TimedCursorState::Timestamp(tick - *m_startTick));
+
+
 
 	RedrawWindow();
 }

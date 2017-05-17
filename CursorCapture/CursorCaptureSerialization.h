@@ -11,7 +11,7 @@ using CursorStateProvider = std::function<void(const CursorStateCallback& callba
 
 class ICapturedCursorProvider;
 
-void SerializeCursor(const ICapturedCursorProvider& capturedCursorProvider);
+void SerializeCursor(const ICapturedCursorProvider& capturedCursorProvider, std::ostream& stream);
 
 
 } // namespace mousecapture

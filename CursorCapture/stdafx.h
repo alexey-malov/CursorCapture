@@ -40,7 +40,7 @@ extern CAppModule _Module;
 #include <map>
 #include <unordered_map>
 #include <string>
-#include <sstream>
+#include <fstream>
 
 #include <boost/algorithm/cxx11/all_of.hpp>
 #include <boost/scope_exit.hpp>

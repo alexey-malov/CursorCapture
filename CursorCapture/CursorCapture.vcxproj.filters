@@ -218,6 +218,12 @@
     <None Include="res\cross_im.cur">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="res\libeam.cur">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\cur00001.cur">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Protobuf_Mapping_Rule Include="proto\UserInput.proto">

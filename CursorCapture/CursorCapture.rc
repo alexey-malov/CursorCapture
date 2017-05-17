@@ -13,6 +13,24 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
+// English resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_COLORED_CURSOR      CURSOR                  "res\\cur00001.cur"
+
+#endif    // English resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
@@ -227,6 +245,8 @@ IDC_CROSS_I             CURSOR                  "res\\cross_i.cur"
 IDC_CROSS_IL            CURSOR                  "res\\cross_il.cur"
 
 IDC_CROSS_IM            CURSOR                  "res\\cross_im.cur"
+
+IDC_LIBEAM              CURSOR                  "res\\libeam.cur"
 
 
 /////////////////////////////////////////////////////////////////////////////
