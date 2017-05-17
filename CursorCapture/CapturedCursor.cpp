@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "CapturedCursor.h"
-#include <array>
-#include <boost/iterator/transform_iterator.hpp>
 #include "Utils.h"
+
+#include "resource.h"
 
 
 namespace mousecapture
@@ -10,8 +10,6 @@ namespace mousecapture
 
 namespace
 {
-
-
 
 class CCursorFrameInfoGetter
 {
@@ -161,7 +159,9 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 	}
 
 	m_screenPos = ci.ptScreenPos;
-	m_cursor = ci.hCursor;
+	m_cursor = 
+		/*LoadCursor(_Module.m_hInst, MAKEINTRESOURCE(IDC_COLORED_CURSOR));*/
+		ci.hCursor;//*/
 
 	m_isVisible = (ci.flags == CURSOR_SHOWING);
 	if (!m_isVisible)
@@ -284,11 +284,18 @@ CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
 	auto width = bmMask.bmWidth;
 	auto height = color ? bmMask.bmHeight : bmMask.bmHeight / 2;
 
-	auto makeDibFromCursor = [&dstDC, width, height, frameIndex, &cursor](UINT flags) {
+	auto makeDibFromCursor = [&dstDC, width, height, frameIndex, &cursor](UINT flags, bool makeOpaque) {
 		CDIBitmap dib(dstDC, width, height);
 		AutoSelectObject(dstDC, dib.GetBitmap(), [&] {
 			ATLVERIFY(dstDC.DrawIconEx(0, 0, cursor, 0, 0, frameIndex, nullptr, flags));
 		});
+		if (makeOpaque)
+		{
+			for (auto & pixel : dib.GetData())
+			{
+				pixel |= 0xff000000;
+			}
+		}
 		return dib;
 	};
 
@@ -307,26 +314,12 @@ CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
 
 	if (useMaskDrawing)
 	{
-		m_mask = makeDibFromCursor(DI_MASK);
-		m_color = makeDibFromCursor(DI_IMAGE);
+		m_mask = makeDibFromCursor(DI_MASK, true);
+		m_color = makeDibFromCursor(DI_IMAGE, true);
 	}
 	else // Draw using DrawIconEx
 	{
-		m_color = makeDibFromCursor(DI_IMAGE);
-
-		GdiFlush();
-		// Premultiply alpha
-		for (uint32_t & x : m_color.GetData())
-		{
-			float alpha = (x >> 24) / 255.0f;
-			auto premultiply = [&](auto c) {
-				return gsl::narrow_cast<uint32_t>(roundf(c * alpha));
-			};
-			auto red = premultiply(GetRValue(x));
-			auto green = premultiply(GetGValue(x));
-			auto blue = premultiply(GetBValue(x));
-			x = RGB(red, green, blue) | (x & 0xff000000);
-		}
+		m_color = makeDibFromCursor(DI_IMAGE, false);
 	}
 
 }
