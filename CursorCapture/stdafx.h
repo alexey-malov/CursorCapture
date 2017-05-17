@@ -39,6 +39,8 @@ extern CAppModule _Module;
 #include <functional>
 #include <map>
 #include <unordered_map>
+#include <string>
+#include <sstream>
 
 #include <boost/algorithm/cxx11/all_of.hpp>
 #include <boost/scope_exit.hpp>
@@ -48,9 +50,12 @@ extern CAppModule _Module;
 #include <boost/range/algorithm/sort.hpp>
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/range/adaptor/map.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <gsl/span>
 #include <gsl/gsl>
 
+#define FREEIMAGE_LIB
+#include <FreeImage.h>
 
 #if defined _M_IX86
   #pragma comment(linker, "/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='x86' publicKeyToken='6595b64144ccf1df' language='*'\"")

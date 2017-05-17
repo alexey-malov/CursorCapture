@@ -8,39 +8,39 @@ namespace mousecapture
 using boost::for_each;
 using boost::adaptors::map_values;
 
-CursorFrameDescription::CursorFrameDescription(const CDIBitmapData* colorBitmap, const CDIBitmapData* maskBitmap,
+CursorState::CursorState(const CDIBitmapData* colorBitmap, const CDIBitmapData* maskBitmap,
 	const MouseButtonsState& mouseState, const POINT& screenPos, const POINT& hotspot)
 	: colorBitmap(colorBitmap), maskBitmap(maskBitmap)
 	, mouseState(mouseState), screenPos(screenPos), hotspot(hotspot)
 {
 }
 
-bool CursorFrameDescription::operator==(const CursorFrameDescription& rhs) const
+bool CursorState::operator==(const CursorState& rhs) const
 {
 	return (colorBitmap == rhs.colorBitmap) && (maskBitmap == rhs.maskBitmap)
 		&& (mouseState == rhs.mouseState) && (screenPos == rhs.screenPos)
 		&& (hotspot == rhs.hotspot);
 }
 
-bool CursorFrameDescription::operator!=(const CursorFrameDescription& rhs) const
+bool CursorState::operator!=(const CursorState& rhs) const
 {
 	return !(*this == rhs);
 }
 
 CMouseCapturer::~CMouseCapturer() = default;
 
-void CMouseCapturer::CaptureCursor(const Timestamp& timestamp)
+void CMouseCapturer::CaptureCursor(const TimedCursorState::Timestamp& timestamp)
 {
 	auto newCursor = std::make_unique<CCapturedCursor>(m_prevCursor.get());
 	
 	auto frameDesc = CreateCursorFrameDescriptor(*newCursor);
 
-	if (m_cursorFrames.empty() 
-		|| ((timestamp > m_cursorFrames.back().timestamp) 
-			&& (frameDesc != m_cursorFrames.back().description))
+	if (m_cursorStates.empty() 
+		|| ((timestamp > m_cursorStates.back().timestamp) 
+			&& (frameDesc != m_cursorStates.back().state))
 		)
 	{
-		m_cursorFrames.emplace_back(frameDesc, timestamp);
+		m_cursorStates.emplace_back(frameDesc, timestamp);
 	}
 
 	m_prevCursor = std::move(newCursor);
@@ -51,12 +51,12 @@ void CMouseCapturer::EnumerateImages(const std::function<void(const CDIBitmapDat
 	for_each(m_images | map_values, fn);
 }
 
-void CMouseCapturer::EnumerateFrames(const std::function<void(const TimedCursorFrame& frame)>& fn) const
+void CMouseCapturer::EnumerateStates(const std::function<void(const TimedCursorState& state)>& fn) const
 {
-	for_each(m_cursorFrames, fn);
+	for_each(m_cursorStates, fn);
 }
 
-CursorFrameDescription CMouseCapturer::CreateCursorFrameDescriptor(const CCapturedCursor& cursor)
+CursorState CMouseCapturer::CreateCursorFrameDescriptor(const CCapturedCursor& cursor)
 {
 	if (!cursor.IsVisible())
 	{
@@ -90,10 +90,10 @@ CDIBitmapData* CMouseCapturer::RegisterImage(const CDIBitmap& dib)
 	return &pos->second;
 }
 
-CMouseCapturer::TimedCursorFrame::TimedCursorFrame(
-	const CursorFrameDescription& descr, 
+TimedCursorState::TimedCursorState(
+	const CursorState& state, 
 	const Timestamp& timestamp) 
-	: description(descr)
+	: state(state)
 	, timestamp(timestamp)
 {
 }

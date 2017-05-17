@@ -16,6 +16,15 @@
     <Filter Include="mousecapture">
       <UniqueIdentifier>{11122dfb-4f73-48b5-892d-1efe786c3779}</UniqueIdentifier>
     </Filter>
+    <Filter Include="mousecapture\proto">
+      <UniqueIdentifier>{6497690d-fb19-4cbc-bf0b-edfb67fd9236}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="mousecapture\proto\generated">
+      <UniqueIdentifier>{07b59b63-85f4-40f0-bfd1-df1e2759e2a8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="freeimage">
+      <UniqueIdentifier>{ca2a52ee-3712-49a2-b109-f02a0a17484e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -50,6 +59,27 @@
     </ClCompile>
     <ClCompile Include="DIBitmapData.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CursorCaptureSerialization.cpp">
+      <Filter>mousecapture</Filter>
+    </ClCompile>
+    <ClCompile Include="proto\src\UserInput.pb.cc">
+      <Filter>mousecapture\proto\generated</Filter>
+    </ClCompile>
+    <ClCompile Include="FreeImage.cpp">
+      <Filter>freeimage</Filter>
+    </ClCompile>
+    <ClCompile Include="FreeImageIO.cpp">
+      <Filter>freeimage</Filter>
+    </ClCompile>
+    <ClCompile Include="FreeImageInit.cpp">
+      <Filter>freeimage</Filter>
+    </ClCompile>
+    <ClCompile Include="FreeImageIOMemory.cpp">
+      <Filter>freeimage</Filter>
+    </ClCompile>
+    <ClCompile Include="FreeImageIOOstream.cpp">
+      <Filter>freeimage</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +121,33 @@
     </ClInclude>
     <ClInclude Include="Utils.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CursorCaptureSerialization.h">
+      <Filter>mousecapture</Filter>
+    </ClInclude>
+    <ClInclude Include="proto\src\UserInput.pb.h">
+      <Filter>mousecapture\proto\generated</Filter>
+    </ClInclude>
+    <ClInclude Include="FreeImage.h">
+      <Filter>freeimage</Filter>
+    </ClInclude>
+    <ClInclude Include="FreeImage_fwd.h">
+      <Filter>freeimage</Filter>
+    </ClInclude>
+    <ClInclude Include="FreeImageIO.h">
+      <Filter>freeimage</Filter>
+    </ClInclude>
+    <ClInclude Include="IFreeImageIO.h">
+      <Filter>freeimage</Filter>
+    </ClInclude>
+    <ClInclude Include="FreeImageInit.h">
+      <Filter>freeimage</Filter>
+    </ClInclude>
+    <ClInclude Include="FreeImageIOMemory.h">
+      <Filter>freeimage</Filter>
+    </ClInclude>
+    <ClInclude Include="FreeImageIOOstream.h">
+      <Filter>freeimage</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -161,5 +218,10 @@
     <None Include="res\cross_im.cur">
       <Filter>Resource Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Protobuf_Mapping_Rule Include="proto\UserInput.proto">
+      <Filter>mousecapture\proto</Filter>
+    </Protobuf_Mapping_Rule>
   </ItemGroup>
 </Project>

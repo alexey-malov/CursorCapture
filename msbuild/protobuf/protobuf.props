@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup
+    Condition="'$(Protobuf_Mapping_RuleBeforeTargets)' == '' and '$(Protobuf_Mapping_RuleAfterTargets)' == '' and '$(ConfigurationType)' != 'Makefile'">
+    <Protobuf_Mapping_RuleBeforeTargets>Midl</Protobuf_Mapping_RuleBeforeTargets>
+    <Protobuf_Mapping_RuleAfterTargets>CustomBuild</Protobuf_Mapping_RuleAfterTargets>
+  </PropertyGroup>
+  <PropertyGroup>
+    <Protobuf_Mapping_RuleDependsOn
+      Condition="'$(ConfigurationType)' != 'Makefile'">_SelectedFiles;$(Protobuf_Mapping_RuleDependsOn)</Protobuf_Mapping_RuleDependsOn>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Protobuf_Mapping_Rule>
+      <ImportsPath>.</ImportsPath>
+      <OutDir>.</OutDir>
+	  <AdditionalInputs></AdditionalInputs>
+      <ErrorFormat>msvs</ErrorFormat>
+      <CommandLineTemplate>protoc.exe [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
+      <ExecutionDescription>protoc %(Identity)</ExecutionDescription>      
+    </Protobuf_Mapping_Rule>
+  </ItemDefinitionGroup>
+</Project>

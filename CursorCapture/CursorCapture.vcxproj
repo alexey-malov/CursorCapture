@@ -20,52 +20,58 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{19354B85-A934-44AB-9CE0-A202482096B9}</ProjectGuid>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="..\msbuild\protobuf\protobuf.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\VS2013.Cpp.Win32.props" />
+    <Import Project="..\protobuf3.Cpp.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\VS2013.Cpp.Win32.props" />
+    <Import Project="..\protobuf3.Cpp.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\VS2013.Cpp.x64.props" />
+    <Import Project="..\protobuf3.Cpp.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\VS2013.Cpp.x64.props" />
+    <Import Project="..\protobuf3.Cpp.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -94,6 +100,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libprotobuf$(DebugSuffixOpt)-$(PlatformToolset).lib;FreeImage$(DebugSuffixOpt)-$(PlatformToolset).lib;libpng$(DebugSuffixOpt)-$(PlatformToolset).lib;zlib$(DebugSuffixOpt)-$(PlatformToolset).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -130,6 +137,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libprotobuf$(DebugSuffixOpt)-$(PlatformToolset).lib;FreeImage$(DebugSuffixOpt)-$(PlatformToolset).lib;libpng$(DebugSuffixOpt)-$(PlatformToolset).lib;zlib$(DebugSuffixOpt)-$(PlatformToolset).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -162,6 +170,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>libprotobuf$(DebugSuffixOpt)-$(PlatformToolset).lib;FreeImage$(DebugSuffixOpt)-$(PlatformToolset).lib;libpng$(DebugSuffixOpt)-$(PlatformToolset).lib;zlib$(DebugSuffixOpt)-$(PlatformToolset).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -195,6 +204,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>libprotobuf$(DebugSuffixOpt)-$(PlatformToolset).lib;FreeImage$(DebugSuffixOpt)-$(PlatformToolset).lib;libpng$(DebugSuffixOpt)-$(PlatformToolset).lib;zlib$(DebugSuffixOpt)-$(PlatformToolset).lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0409</Culture>
@@ -221,11 +231,27 @@
     <ClCompile Include="CapturedCursor.cpp" />
     <ClCompile Include="crc64.cpp" />
     <ClCompile Include="CursorCapture.cpp" />
+    <ClCompile Include="CursorCaptureSerialization.cpp" />
     <ClCompile Include="CursorCaptureView.cpp" />
     <ClCompile Include="DIBitmap.cpp" />
     <ClCompile Include="DIBitmapData.cpp" />
+    <ClCompile Include="FreeImage.cpp" />
+    <ClCompile Include="FreeImageInit.cpp" />
+    <ClCompile Include="FreeImageIO.cpp" />
+    <ClCompile Include="FreeImageIOMemory.cpp" />
+    <ClCompile Include="FreeImageIOOstream.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="MouseCapturer.cpp" />
+    <ClCompile Include="proto\src\UserInput.pb.cc">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4125;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4125;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4125;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4125;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -239,11 +265,20 @@
     <ClInclude Include="CapturedCursor.h" />
     <ClInclude Include="CapturedCursor_fwd.h" />
     <ClInclude Include="crc64.h" />
+    <ClInclude Include="CursorCaptureSerialization.h" />
     <ClInclude Include="CursorCaptureView.h" />
     <ClInclude Include="DIBitmap.h" />
     <ClInclude Include="DIBitmapData.h" />
+    <ClInclude Include="FreeImage.h" />
+    <ClInclude Include="FreeImageInit.h" />
+    <ClInclude Include="FreeImageIO.h" />
+    <ClInclude Include="FreeImageIOMemory.h" />
+    <ClInclude Include="FreeImageIOOstream.h" />
+    <ClInclude Include="FreeImage_fwd.h" />
+    <ClInclude Include="IFreeImageIO.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="MouseCapturer.h" />
+    <ClInclude Include="proto\src\UserInput.pb.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TextureAtlasCreator.h" />
@@ -276,7 +311,20 @@
     <None Include="res\cursor4.cur" />
     <None Include="res\cursor5.cur" />
   </ItemGroup>
+  <ItemGroup>
+    <Protobuf_Mapping_Rule Include="proto\UserInput.proto">
+      <ImportsPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">proto</ImportsPath>
+      <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">proto\src</OutDir>
+      <ImportsPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">proto</ImportsPath>
+      <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">proto\src</OutDir>
+      <ImportsPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">proto</ImportsPath>
+      <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">proto\src</OutDir>
+      <ImportsPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">proto</ImportsPath>
+      <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">proto\src</OutDir>
+    </Protobuf_Mapping_Rule>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\msbuild\protobuf\protobuf.targets" />
   </ImportGroup>
 </Project>

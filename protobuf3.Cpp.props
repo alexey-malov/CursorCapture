@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <ExecutablePath>$(SDK_2012)\protobuf-3.2.0\bin;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(SDK_2012)\protobuf-3.2.0\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SDK_2012)\protobuf-3.2.0\lib\$(PlatformDirOpt);$(LibraryPath)</LibraryPath>
+  </PropertyGroup> 
+</Project>

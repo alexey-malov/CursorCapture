@@ -84,7 +84,7 @@ void CCursorCaptureView::OnTimer(UINT_PTR /*nIDEvent*/)
 	{
 		m_startTick = tick;
 	}
-	m_capturer.CaptureCursor(CMouseCapturer::Timestamp(tick - *m_startTick));
+	m_capturer.CaptureCursor(TimedCursorState::Timestamp(tick - *m_startTick));
 
 	RedrawWindow();
 }

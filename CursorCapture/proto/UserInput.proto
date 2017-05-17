@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package mousecapture.pb_userinput;
+
+message TextureAtlas {
+	enum ImageFormat {
+		BMP = 0;
+		PNG = 1;
+	}
+
+	ImageFormat image_format = 1;
+	bytes image_data = 2;
+
+	message SubImage {
+		uint32 left = 1;
+		uint32 top = 2;
+		uint32 width = 3;
+		uint32 height = 4;
+	}
+	repeated SubImage sub_images = 5;
+}
+
+message MouseCursorState {
+	uint64 timestamp = 1;
+	uint32 color_image_index = 2;
+	uint32 mask_image_index = 3;
+	sint32 cursor_x = 4;
+	sint32 cursor_y = 5;
+	uint32 hotspot_x = 6;
+	uint32 hotspot_y = 7;
+
+	/*
+	Combination of the following flags:
+		0x01 - left button pressed
+		0x02 - right button pressed
+		0x04 - middle button pressed
+	*/
+	uint32 button_states = 8;
+}
+
+message MouseCursor {
+	TextureAtlas texture = 1;
+	repeated MouseCursorState states = 2;
+}

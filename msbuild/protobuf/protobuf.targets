@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <PropertyPageSchema
+      Include="$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml" />
+    <AvailableItemName
+      Include="Protobuf_Mapping_Rule">
+      <Targets>ProtobufCompile</Targets>
+    </AvailableItemName>
+  </ItemGroup>
+  <UsingTask
+    TaskName="Protobuf_Mapping_Rule"
+    TaskFactory="XamlTaskFactory"
+    AssemblyName="Microsoft.Build.Tasks.v4.0">
+    <Task>$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml</Task>
+  </UsingTask>
+  <Target
+    Name="ProtobufCompile"
+    BeforeTargets="$(Protobuf_Mapping_RuleBeforeTargets)"
+    AfterTargets="$(Protobuf_Mapping_RuleAfterTargets)"
+    Condition="'@(Protobuf_Mapping_Rule)' != ''"
+    DependsOnTargets="$(Protobuf_Mapping_RuleDependsOn);ProtobufOutputDir"
+    Outputs="%(Protobuf_Mapping_Rule.OutDir)\%(Protobuf_Mapping_Rule.Filename).pb.h;%(Protobuf_Mapping_Rule.OutDir)\%(Protobuf_Mapping_Rule.Filename).pb.cc"
+    Inputs="%(Protobuf_Mapping_Rule.Identity);%(Protobuf_Mapping_Rule.AdditionalDependencies);$(MSBuildProjectFile)">
+    <ItemGroup
+      Condition="'@(SelectedFiles)' != ''">
+      <Protobuf_Mapping_Rule
+        Remove="@(Protobuf_Mapping_Rule)"
+        Condition="'%(Identity)' != '@(SelectedFiles)'" />
+    </ItemGroup>
+    <ItemGroup>
+      <Protobuf_Mapping_Rule_tlog
+        Include="%(Protobuf_Mapping_Rule.OutDir)\%(Protobuf_Mapping_Rule.Filename).pb.h;%(Protobuf_Mapping_Rule.OutDir)\%(Protobuf_Mapping_Rule.Filename).pb.cc"
+        Condition="'%(Protobuf_Mapping_Rule.OutDir)\%(Protobuf_Mapping_Rule.Filename).pb.h;%(Protobuf_Mapping_Rule.OutDir)\%(Protobuf_Mapping_Rule.Filename).pb.cc' != '' and '%(Protobuf_Mapping_Rule.ExcludedFromBuild)' != 'true'">
+        <Source>@(Protobuf_Mapping_Rule, '|')</Source>
+      </Protobuf_Mapping_Rule_tlog>
+    </ItemGroup>
+    <Message
+      Importance="High"
+      Text="%(Protobuf_Mapping_Rule.ExecutionDescription)" />
+    <WriteLinesToFile
+      Condition="'@(Protobuf_Mapping_Rule_tlog)' != '' and '%(Protobuf_Mapping_Rule_tlog.ExcludedFromBuild)' != 'true'"
+      File="$(IntDir)$(ProjectName).write.1.tlog"
+      Lines="^%(Protobuf_Mapping_Rule_tlog.Source);@(Protobuf_Mapping_Rule_tlog-&gt;'%(Fullpath)')" />
+    <Protobuf_Mapping_Rule
+      Condition="'@(Protobuf_Mapping_Rule)' != '' and '%(Protobuf_Mapping_Rule.ExcludedFromBuild)' != 'true'"
+      CommandLineTemplate="%(Protobuf_Mapping_Rule.CommandLineTemplate)"
+      ImportsPath="%(Protobuf_Mapping_Rule.ImportsPath)"      
+      OutDir="%(Protobuf_Mapping_Rule.OutDir)"
+	  AdditionalInputs="%(Protobuf_Mapping_Rule.AdditionalInputs)"
+      ErrorFormat="%(Protobuf_Mapping_Rule.ErrorFormat)"
+      AdditionalOptions="%(Protobuf_Mapping_Rule.AdditionalOptions)"
+      Inputs="%(Protobuf_Mapping_Rule.Identity)" />
+  </Target>
+  <Target
+    Name="ProtobufClean"
+    BeforeTargets="CoreCppClean"
+    AfterTargets="_PrepareForClean"
+    Condition="'@(Protobuf_Mapping_Rule)' != ''">
+    <PropertyGroup>
+      <ProtobufCleanFilePatternsToDelete>@(Protobuf_Mapping_Rule->Metadata('OutDir')->Distinct())\@(Protobuf_Mapping_Rule->Metadata('Filename')->Distinct()).pb.h;@(Protobuf_Mapping_Rule->Metadata('OutDir')->Distinct())\@(Protobuf_Mapping_Rule->Metadata('Filename')->Distinct()).pb.cc</ProtobufCleanFilePatternsToDelete>
+    </PropertyGroup>
+    <ItemGroup>
+      <CoreCppClean>
+        <FilePatternsToDelete
+          Condition="'%(CoreCppClean.FilePatternsToDelete)' != ''">%(CoreCppClean.FilePatternsToDelete);$(ProtobufCleanFilePatternsToDelete)</FilePatternsToDelete>
+        <FilePatternsToDelete
+          Condition="'%(CoreCppClean.FilePatternsToDelete)' == ''">$(ProtobufCleanFilePatternsToDelete)</FilePatternsToDelete>
+      </CoreCppClean>
+    </ItemGroup>
+  </Target>
+  <Target
+    Name="ProtobufOutputDir"
+    Condition="'@(Protobuf_Mapping_Rule)' != ''">
+    <MakeDir Directories="@(Protobuf_Mapping_Rule->Metadata('OutDir')->Distinct()->ClearMetadata())" />
+  </Target>
+</Project>

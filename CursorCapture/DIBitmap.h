@@ -24,6 +24,7 @@ public:
 
 	explicit operator bool()const { return !!m_bitmap; }
 
+	ConstSpan GetScanline(unsigned scanline)const;
 	ConstSpan GetData()const;
 	Span GetData();
 private:

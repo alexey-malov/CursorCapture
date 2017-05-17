@@ -5,10 +5,10 @@
 namespace mousecapture
 {
 
-struct CursorFrameDescription
+struct CursorState
 {
-	CursorFrameDescription() = default;
-	CursorFrameDescription(
+	CursorState() = default;
+	CursorState(
 		const CDIBitmapData* colorBitmap,
 		const CDIBitmapData* maskBitmap,
 		const MouseButtonsState& mouseState,
@@ -16,8 +16,8 @@ struct CursorFrameDescription
 		const POINT& hotspot
 	);
 
-	bool operator==(const CursorFrameDescription& rhs)const;
-	bool operator!=(const CursorFrameDescription& rhs)const;
+	bool operator==(const CursorState& rhs)const;
+	bool operator!=(const CursorState& rhs)const;
 
 	const CDIBitmapData* colorBitmap = nullptr;
 	const CDIBitmapData* maskBitmap = nullptr;
@@ -26,25 +26,35 @@ struct CursorFrameDescription
 	CPoint hotspot = { 0, 0 };
 };
 
-class CMouseCapturer
+struct TimedCursorState
 {
-public:
 	using Timestamp = std::chrono::milliseconds;
 
-	struct TimedCursorFrame
-	{
-		TimedCursorFrame(const CursorFrameDescription& descr, const Timestamp& timestamp);
+	TimedCursorState(const CursorState& state, const Timestamp& timestamp);
 
-		CursorFrameDescription description;
-		Timestamp timestamp;
-	};
+	CursorState state;
+	Timestamp timestamp;
+};
 
+class ICapturedCursorProvider
+{
+public:
+
+	virtual ~ICapturedCursorProvider() = default;
+
+	virtual void EnumerateImages(const std::function<void(const CDIBitmapData& img)>& fn) const = 0;
+	virtual void EnumerateStates(const std::function<void(const TimedCursorState& state)>& fn) const = 0;
+};
+
+class CMouseCapturer : public ICapturedCursorProvider
+{
+public:
 	~CMouseCapturer();
 
-	void CaptureCursor(const Timestamp& timestamp);
+	void CaptureCursor(const TimedCursorState::Timestamp& timestamp);
 
-	void EnumerateImages(const std::function<void(const CDIBitmapData& img)>& fn) const;
-	void EnumerateFrames(const std::function<void(const TimedCursorFrame& frame)>& fn) const;
+	void EnumerateImages(const std::function<void(const CDIBitmapData& img)>& fn) const override;
+	void EnumerateStates(const std::function<void(const TimedCursorState& state)>& fn) const override;
 private:
 	// Bitmap id
 	struct DIBitmapID
@@ -67,12 +77,12 @@ private:
 	// Cursor frame description with timestamp
 	using ImageStorage = std::unordered_map<DIBitmapID, CDIBitmapData, DIBitmapIDHasher>;
 
-	CursorFrameDescription CreateCursorFrameDescriptor(const CCapturedCursor& cursor);
+	CursorState CreateCursorFrameDescriptor(const CCapturedCursor& cursor);
 	CDIBitmapData* RegisterImage(const CDIBitmap& dib);
 
 	std::unique_ptr<CCapturedCursor> m_prevCursor;
 	ImageStorage m_images;
-	std::deque<TimedCursorFrame> m_cursorFrames;
+	std::deque<TimedCursorState> m_cursorStates;
 };
 
 } // namespace mousecapture

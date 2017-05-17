@@ -48,6 +48,11 @@ HBITMAP CDIBitmap::GetBitmap() const
 	return m_bitmap;
 }
 
+CDIBitmap::ConstSpan CDIBitmap::GetScanline(unsigned scanline) const
+{
+	return m_bits.subspan((GetHeight() - 1 - scanline) * GetWidth(), GetWidth());
+}
+
 CDIBitmap::ConstSpan CDIBitmap::GetData() const
 {
 	return m_bits;

@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+package userinput;
+
+message Rect {
+	
+}
+
+message TextureAtlas {
+	bytes texture = 1;
+}
