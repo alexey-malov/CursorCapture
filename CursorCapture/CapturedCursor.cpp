@@ -282,7 +282,7 @@ CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
 
 	m_hotspot = { iconInfo.GetXHotspot(), iconInfo.GetYHotspot() };
 
-	auto iconColor = iconInfo.GetColor();
+	auto iconImage = iconInfo.GetColor();
 
 	WTL::CWindowDC desktopDC(nullptr);
 	WTL::CDC dstDC;
@@ -291,13 +291,17 @@ CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
 	BITMAP bmMask;
 	ATLVERIFY(iconMask.GetBitmap(&bmMask));
 	auto width = bmMask.bmWidth;
-	auto height = iconColor ? bmMask.bmHeight : bmMask.bmHeight / 2;
+	auto height = iconImage ? bmMask.bmHeight : bmMask.bmHeight / 2;
 
 	auto makeDibFromCursor = [&dstDC, width, height, frameIndex, &cursor](UINT flags) {
 		CDIBitmap dib(dstDC, width, height);
 		AutoSelectObject(dstDC, dib.GetBitmap(), [&] {
 			ATLASSERT(cursor);
-			ATLVERIFY(dstDC.DrawIconEx(0, 0, cursor, 0, 0, frameIndex, nullptr, flags));
+
+			if (!dstDC.DrawIconEx(0, 0, cursor, 0, 0, frameIndex, nullptr, flags))
+			{
+				throw std::runtime_error("Failed to draw icon");
+			}
 		});
 		return dib;
 	};
@@ -305,13 +309,13 @@ CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
 	auto maskDib = makeDibFromCursor(DI_MASK);
 
 	m_colorBitmap = makeDibFromCursor(DI_IMAGE);
-	bool useMask = !iconColor;
-	if (iconColor)
+	bool useMask = !iconImage;
+	if (iconImage)
 	{
 		ATLASSERT(!useMask);
 
 		BITMAP bmColor;
-		ATLVERIFY(iconColor.GetBitmap(bmColor));
+		ATLVERIFY(iconImage.GetBitmap(bmColor));
 
 		auto isTransparent = [](uint32_t pixel) { return (pixel & 0xff000000) == 0; };
 		useMask = all_of(m_colorBitmap.GetData(), isTransparent);

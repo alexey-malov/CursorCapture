@@ -6,9 +6,18 @@ namespace mousecapture
 template <typename Fn>
 void AutoSelectObject(HDC dc, HGDIOBJ obj, Fn&& fn)
 {
-	auto oldObject = SelectObject(dc, obj);
+	assert(dc);
+	assert(obj);
+
+	auto oldObject = ::SelectObject(dc, obj);
+	BOOST_SCOPE_EXIT_ALL(&)
+	{
+		if (oldObject)
+		{
+			::SelectObject(dc, oldObject);
+		}
+	};
 	fn();
-	SelectObject(dc, oldObject);
 }
 
 } // namespace mousecapture
