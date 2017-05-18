@@ -28,14 +28,14 @@ public:
 	{
 		if (m_getCursorFrameInfo)
 		{
-			CursorFrameInfo frameInfo;
-			ATLVERIFY(m_getCursorFrameInfo(cursor, 0, 0, &frameInfo.displayRateInJiffies, &frameInfo.totalFrames));
-			return frameInfo;
+			CursorFrameInfo frameInfo = { 0, 1 };
+			ATLASSERT(cursor);
+			if (m_getCursorFrameInfo(cursor, 0, 0, &frameInfo.displayRateInJiffies, &frameInfo.totalFrames))
+			{
+				return frameInfo;
+			}
 		}
-		else
-		{
-			return{ 0, 1 };
-		}
+		return{ 0, 1 };
 	}
 private:
 	GET_CURSOR_FRAME_INFO m_getCursorFrameInfo = nullptr;
@@ -164,7 +164,6 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 		return;
 	}
 
-	m_screenPos = ci.ptScreenPos;
 	m_cursor = ci.hCursor;
 
 	m_isVisible = (ci.flags == CURSOR_SHOWING);
@@ -173,7 +172,6 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 		return;
 	}
 
-	m_mouseButtons = CaptureMouseButtonState();
 
 	m_frameInfo = GetCursorFrameInfo(m_cursor);
 
@@ -200,7 +198,20 @@ CCapturedCursor::CCapturedCursor(const CCapturedCursor *prevCursor)
 	}
 
 	// Capture cursor image
-	m_image = CCursorImage(m_cursor, m_frameIndex);
+	try
+	{
+		m_image = CCursorImage(m_cursor, m_frameIndex);
+		m_screenPos = ci.ptScreenPos;
+		m_mouseButtons = CaptureMouseButtonState();
+	}
+	catch (...)
+	{
+		m_isVisible = false;
+		m_screenPos = { 0, 0 };
+		m_frameInfo = { 0, 1 };
+		m_cursor = nullptr;
+	}
+
 }
 
 MouseButtonsState CCapturedCursor::GetMouseButtonsState() const
@@ -285,6 +296,7 @@ CCursorImage::CCursorImage(HCURSOR cursor, UINT frameIndex)
 	auto makeDibFromCursor = [&dstDC, width, height, frameIndex, &cursor](UINT flags) {
 		CDIBitmap dib(dstDC, width, height);
 		AutoSelectObject(dstDC, dib.GetBitmap(), [&] {
+			ATLASSERT(cursor);
 			ATLVERIFY(dstDC.DrawIconEx(0, 0, cursor, 0, 0, frameIndex, nullptr, flags));
 		});
 		return dib;
