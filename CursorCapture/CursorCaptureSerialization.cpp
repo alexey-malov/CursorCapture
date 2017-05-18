@@ -1,6 +1,9 @@
 #include "stdafx.h"
 #include "CursorCaptureSerialization.h"
+#pragma warning(push)
+#pragma warning(disable: 4100)
 #include "proto/src/UserInput.pb.h"
+#pragma warning(pop)
 #include "DIBitmap.h"
 #include "FreeImage.h"
 #include "TextureAtlasCreator.h"

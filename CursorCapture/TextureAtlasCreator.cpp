@@ -84,7 +84,7 @@ CSize PlaceImagesOnAtlas(gsl::span<NestedDIB> images, const CSize &textureAtlasS
 	boost::sort(images, [](const auto& lhs, const auto& rhs) {
 		auto lhsBitmap = lhs.bitmapData;
 		auto rhsBitmap = rhs.bitmapData;
-		return make_pair(lhsBitmap->GetWidth(), lhsBitmap->GetHeight()) <
+		return make_pair(lhsBitmap->GetWidth(), lhsBitmap->GetHeight()) >
 			make_pair(rhsBitmap->GetWidth(), rhsBitmap->GetHeight());
 	});
 
@@ -95,8 +95,9 @@ CSize PlaceImagesOnAtlas(gsl::span<NestedDIB> images, const CSize &textureAtlasS
 	unsigned shelfTop = 0;
 	for (auto & image : images)
 	{
-		auto & bd = image.bitmapData;
+		auto bd = image.bitmapData;
 
+		assert(bd->GetHeight() <= gsl::narrow<unsigned>(textureAtlasSize.cy));
 		// Find a place for the image
 		do
 		{
@@ -124,6 +125,9 @@ CSize PlaceImagesOnAtlas(gsl::span<NestedDIB> images, const CSize &textureAtlasS
 
 		usedAtlasSize.cx = std::max(usedAtlasSize.cx, image.frame.right);
 		usedAtlasSize.cy = std::max(usedAtlasSize.cy, image.frame.bottom);
+
+		assert(usedAtlasSize.cx <= textureAtlasSize.cx);
+		assert(usedAtlasSize.cy <= textureAtlasSize.cy);
 	}
 
 	return usedAtlasSize;
@@ -188,6 +192,8 @@ CSize FindOptimalTextureAtlasDimensions(const CSize& imageSize, int imageCount)
 		}
 	}
 	assert(winner);
+	assert(winner->atlasSize.cx >= imageSize.cx);
+	assert(winner->atlasSize.cy >= imageSize.cy);
 	return winner->atlasSize;
 }
 
@@ -210,6 +216,9 @@ CTextureAtlas BuildTextureAtlas(const ImageProvider& imageProvider)
 	imageProvider([&](const CDIBitmapData& bd) {
 		largestImage.cx = max<int>(largestImage.cx, bd.GetWidth());
 		largestImage.cy = max<int>(largestImage.cy, bd.GetHeight());
+
+		assert(largestImage.cx >= gsl::narrow<int>(bd.GetWidth()));
+		assert(largestImage.cy >= gsl::narrow<int>(bd.GetHeight()));
 		images.emplace_back(bd, images.size());
 	});
 
